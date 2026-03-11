@@ -268,6 +268,7 @@ const PROGRAM = {
       { name: 'Squat', target: '4 × 5', pause: '3 min', note: 'Tung | +2,5 kg/veke', sets: 4, hasKg: true, startKg: 65 },
       { name: 'Deadlift', target: '3 × 6', pause: '90 sek', note: 'Lett (80% av squat)', sets: 3, hasKg: true, startKg: 52.5 },
       { name: 'Skulderpress, sittande', target: '4 × 10–12', pause: '90 sek', note: 'Bytt til 15 kg ved 4×12', sets: 4, hasKg: true, startKg: 12.5 },
+      { name: 'Planke', target: '3 × maks-2', pause: '60 sek', note: 'Start ~40 sek | ikkje til failure', sets: 3, hasKg: false, isTimed: true },
     ]
   },
   B: {
@@ -497,13 +498,15 @@ function openLogModal() {
         </div>`;
       }
     } else {
+      const unit = ex.isTimed ? 'sek' : 'reps';
       html += `<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;padding-left:46px">
-        <div style="flex:1;text-align:center;font-family:'DM Mono',monospace;font-size:10px;color:var(--muted)">reps</div>
+        <div style="flex:1;text-align:center;font-family:'DM Mono',monospace;font-size:10px;color:var(--muted)">${unit}</div>
       </div>`;
       for (let s = 1; s <= ex.sets; s++) {
+        const hint = ex.isTimed ? '0 sek' : '0';
         html += `<div class="set-row" style="margin-bottom:6px">
           <div class="set-label">Sett ${s}</div>
-          <input class="set-input" id="ex${ei}_s${s}_reps" placeholder="0" inputmode="numeric" style="text-align:center">
+          <input class="set-input" id="ex${ei}_s${s}_reps" placeholder="${hint}" inputmode="numeric" style="text-align:center">
         </div>`;
       }
     }
