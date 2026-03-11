@@ -287,28 +287,28 @@ const PROGRAM = {
   A: {
     label: 'Tung nedre + skulderpress',
     exercises: [
-      { name: 'Squat', target: '4 × 5', pause: '3 min', note: 'Tung | +2,5 kg/veke', sets: 4, hasKg: true, startKg: 65 },
-      { name: 'Deadlift', target: '3 × 6', pause: '90 sek', note: 'Lett (80% av squat)', sets: 3, hasKg: true, startKg: 52.5 },
-      { name: 'Skulderpress', target: '4 × 10–12', pause: '90 sek', note: 'Bytt til 15 kg ved 4×12', sets: 4, hasKg: true, startKg: 12.5 },
-      { name: 'Planke', target: '3 × maks-2', pause: '60 sek', note: 'Start ~40 sek | ikkje til failure', sets: 3, hasKg: false, isTimed: true },
+      { name: 'Squat',        target: '4 × 5',   pause: '3 min',  note: 'Tung | +2,5 kg/veke', sets: 4, hasKg: true,  startKg: 65,   supersetWith: 'Skulderpress', supersetLabel: '1a' },
+      { name: 'Skulderpress', target: '4 × 12',  pause: '3 min',  note: '12,5 kg – i pausen til squat', sets: 4, hasKg: true,  startKg: 12.5, supersetWith: 'Squat',        supersetLabel: '1b' },
+      { name: 'Deadlift',     target: '3 × 6',   pause: '90 sek', note: 'Lett – 60 kg', sets: 3, hasKg: true,  startKg: 60 },
+      { name: 'Planke',       target: '3 × 40 sek', pause: '60 sek', note: 'Etter deadlift | ikkje til failure', sets: 3, hasKg: false, isTimed: true, planReps: 40 },
     ]
   },
   B: {
     label: 'Tung øvre + chin-ups',
     exercises: [
-      { name: 'Benkpress', target: '4 × 5', pause: '3 min', note: 'Tung | +2,5 kg/veke', sets: 4, hasKg: true, startKg: 60 },
-      { name: 'Chin-ups', target: '4 × maks-2 + 2 neg.', pause: '2 min', note: '3–5 sek ned på negatives', sets: 4, hasKg: false },
+      { name: 'Benkpress',     target: '4 × 5',      pause: '3 min',  note: 'Tung | +2,5 kg/veke', sets: 4, hasKg: true,  startKg: 60 },
+      { name: 'Chin-ups',      target: '4 × maks-2 + 2 neg.', pause: '2 min', note: '3–5 sek ned på negatives', sets: 4, hasKg: false },
       { name: 'Horisontal rad', target: '3 × 10–12', pause: '90 sek', note: 'Under stang i cage', sets: 3, hasKg: false },
-      { name: 'Biceps curl', target: '3 × 10–12', pause: '60 sek', note: 'Progressivt', sets: 3, hasKg: true, startKg: null },
+      { name: 'Biceps curl',   target: '3 × 10–12',  pause: '60 sek', note: 'Progressivt', sets: 3, hasKg: true,  startKg: null },
     ]
   },
   C: {
     label: 'Tung deadlift + squat lett + volum',
     exercises: [
-      { name: 'Deadlift', target: '4 × 4–5', pause: '3 min', note: 'Tung | +2,5 kg/veke', sets: 4, hasKg: true, startKg: 65 },
-      { name: 'Squat', target: '3 × 8', pause: '90 sek', note: 'Lett (80% av deadlift)', sets: 3, hasKg: true, startKg: 52.5 },
-      { name: 'Benkpress', target: '3 × 8–10', pause: '90 sek', note: 'Lettare enn Dag B', sets: 3, hasKg: true, startKg: 50 },
-      { name: 'Chin-ups', target: '3 × maks-2', pause: '90 sek', note: 'Ikkje til failure', sets: 3, hasKg: false },
+      { name: 'Deadlift',  target: '4 × 4–5',  pause: '3 min',  note: 'Tung | +2,5 kg/veke', sets: 4, hasKg: true,  startKg: 60,   supersetWith: 'Chin-ups', supersetLabel: '1a' },
+      { name: 'Chin-ups',  target: '3 × maks-2', pause: '3 min', note: 'I pausen til deadlift', sets: 3, hasKg: false, supersetWith: 'Deadlift', supersetLabel: '1b' },
+      { name: 'Squat',     target: '3 × 8',    pause: '90 sek', note: 'Lett (80% av deadlift tung)', sets: 3, hasKg: true,  startKg: 52.5 },
+      { name: 'Benkpress', target: '3 × 8–10', pause: '90 sek', note: 'Lettare enn Dag B', sets: 3, hasKg: true,  startKg: 50 },
     ]
   }
 };
@@ -368,11 +368,22 @@ function selectDay(day, btn) {
   }
 }
 
-// Finn siste loggførte kg for ei øving (søk bakover i tid)
-function getLastKg(exName) {
+const PROGRESSION = {
+  'Squat_A':        { increment: 2.5 },
+  'Deadlift_A':     { increment: 0 },        // fast 60 kg til vidare
+  'Skulderpress_A': { increment: 0 },        // manuell trappetrinn-plan
+  'Benkpress_B':    { increment: 2.5 },
+  'Biceps curl_B':  { increment: 0 },
+  'Deadlift_C':     { increment: 2.5 },
+  'Squat_C':        { linkedTo: 'Deadlift_C', factor: 0.8 },
+  'Benkpress_C':    { linkedTo: 'Benkpress_B', factor: 1.0 },
+};
+
+// Finn siste loggførte kg KUN viss nok sett vart gjort (minst minSets)
+function getLastKg(exName, minSets = 3) {
   for (const s of sessions) {
     for (const ex of s.exercises) {
-      if (ex.name === exName && ex.hasKg && ex.sets.length > 0) {
+      if (ex.name === exName && ex.hasKg && ex.sets.length >= minSets) {
         const kg = parseFloat(ex.sets[0].kg);
         if (!isNaN(kg)) return kg;
       }
@@ -380,25 +391,6 @@ function getLastKg(exName) {
   }
   return null;
 }
-
-// Progresjonsreglar per øving
-// increment: kor mykje å leggje på
-// linkedTo: hent vekt frå ei anna øving og gang med factor
-const PROGRESSION = {
-  // Dag A
-  'Squat_A':                    { increment: 2.5 },
-  'Deadlift_A':                 { linkedTo: 'Squat_A', factor: 0.8 },
-  'Skulderpress_A':             { increment: 0 },
-
-  // Dag B
-  'Benkpress_B':                { increment: 2.5 },
-  'Biceps curl_B':              { increment: 0 },
-
-  // Dag C
-  'Deadlift_C':                 { increment: 2.5 },
-  'Squat_C':                    { linkedTo: 'Deadlift_C', factor: 0.8 },
-  'Benkpress_C':                { linkedTo: 'Benkpress_B', factor: 1.0 },
-};
 
 function round(kg) {
   // Rund til nærmaste 0.5 kg (mikrovekter)
@@ -442,6 +434,13 @@ function parsePauseSec(pause) {
   return (minMatch ? parseInt(minMatch[1]) * 60 : 0) + (sekMatch ? parseInt(sekMatch[1]) : 0);
 }
 
+function getPlanReps(ex) {
+  // Hent planlagde reps frå target-streng, t.d. "4 × 5" → 5, "3 × 10–12" → 10
+  if (ex.planReps) return ex.planReps;
+  const m = ex.target.match(/×\s*(\d+)/);
+  return m ? parseInt(m[1]) : '';
+}
+
 function renderExercises() {
   const prog = PROGRAM[currentDay];
   document.getElementById('dayLabel').textContent = prog.label;
@@ -452,8 +451,11 @@ function renderExercises() {
       ? `<span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);margin-left:6px">→ ${suggested} kg</span>`
       : (ex.hasKg ? `<span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);margin-left:6px">—</span>` : '');
     const pauseSec = parsePauseSec(ex.pause);
+    const ssLabel = ex.supersetLabel
+      ? `<span style="font-family:'DM Mono',monospace;font-size:11px;background:rgba(240,96,160,0.15);color:var(--accent3);border:1px solid rgba(240,96,160,0.3);border-radius:4px;padding:1px 6px;margin-right:4px">${ex.supersetLabel}</span>`
+      : `<span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);margin-right:4px">${i+1}</span>`;
     return `
-    <div class="exercise-row">
+    <div class="exercise-row" style="${ex.supersetLabel === '1b' ? 'border-top:1px dashed rgba(240,96,160,0.2);margin-top:-1px' : ''}">
       <button onclick="startTimer(${pauseSec},'${ex.name}')" style="
         flex-shrink:0; width:44px; height:44px; border-radius:10px;
         background:rgba(96,180,240,0.1); border:1px solid rgba(96,180,240,0.25);
@@ -462,7 +464,7 @@ function renderExercises() {
         align-items:center; justify-content:center; gap:1px; line-height:1.2;
       ">⏱<span>${ex.pause}</span></button>
       <div class="ex-info">
-        <div class="ex-name">${ex.name}${kgBadge}</div>
+        <div class="ex-name">${ssLabel}${ex.name}${kgBadge}</div>
         <div class="ex-target">${ex.target}</div>
         <div style="font-size:11px;color:var(--muted);margin-top:1px">${ex.note}</div>
       </div>
@@ -524,12 +526,13 @@ function openLogModal() {
       for (let s = 1; s <= ex.sets; s++) {
         const suggested = getSuggestedKg(ex, currentDay);
         const kgVal = suggested !== null ? suggested : '';
+        const planReps = getPlanReps(ex);
         html += `<div class="set-row" style="margin-bottom:6px">
           <div class="set-label">Sett ${s}</div>
           <div class="kg-reps-row">
             <input class="set-input" id="ex${ei}_s${s}_kg" value="${kgVal}" placeholder="0" inputmode="decimal" style="text-align:center">
             <div class="kg-reps-sep">×</div>
-            <input class="set-input" id="ex${ei}_s${s}_reps" placeholder="0" inputmode="numeric" style="text-align:center">
+            <input class="set-input" id="ex${ei}_s${s}_reps" value="${planReps}" placeholder="0" inputmode="numeric" style="text-align:center">
           </div>
         </div>`;
       }
@@ -539,10 +542,10 @@ function openLogModal() {
         <div style="flex:1;text-align:center;font-family:'DM Mono',monospace;font-size:10px;color:var(--muted)">${unit}</div>
       </div>`;
       for (let s = 1; s <= ex.sets; s++) {
-        const hint = ex.isTimed ? '0 sek' : '0';
+        const planVal = ex.planReps || '';
         html += `<div class="set-row" style="margin-bottom:6px">
           <div class="set-label">Sett ${s}</div>
-          <input class="set-input" id="ex${ei}_s${s}_reps" placeholder="${hint}" inputmode="numeric" style="text-align:center">
+          <input class="set-input" id="ex${ei}_s${s}_reps" value="${planVal}" placeholder="${ex.isTimed ? '0 sek' : '0'}" inputmode="numeric" style="text-align:center">
         </div>`;
       }
     }
@@ -915,13 +918,37 @@ function updateTimerDisplay() {
   display.classList.toggle('urgent', timerRemaining <= 10 && timerRemaining > 0);
 }
 
+function pauseTimer() {
+  const btn = document.getElementById('timerPauseBtn');
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+    btn.textContent = '▶';
+  } else if (timerRemaining > 0) {
+    btn.textContent = '⏸';
+    timerInterval = setInterval(() => {
+      timerRemaining--;
+      updateTimerDisplay();
+      if (timerRemaining <= 0) {
+        clearInterval(timerInterval);
+        const display = document.getElementById('timerDisplay');
+        display.textContent = '✓ Klar!';
+        display.classList.add('done');
+        playPling();
+        setTimeout(() => {
+          document.getElementById('timerBar').classList.remove('visible');
+          display.classList.remove('done');
+        }, 3000);
+      }
+    }, 1000);
+  }
+}
+
 function stopTimer() {
   if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
   const bar = document.getElementById('timerBar');
   if (bar) bar.classList.remove('visible');
 }
-
-// ── INIT ──────────────────────────────────────────────────────────
 // Gjer funksjonar tilgjengelege globalt for inline onclick-hendingar
 window.selectDay = selectDay;
 window.toggleCheck = toggleCheck;
@@ -935,6 +962,9 @@ window.importJSON = importJSON;
 window.bumpWeek = bumpWeek;
 window.startTimer = startTimer;
 window.stopTimer = stopTimer;
+window.pauseTimer = pauseTimer;
+
+// ── INIT ──────────────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
   renderExercises();
@@ -947,7 +977,8 @@ document.addEventListener('DOMContentLoaded', () => {
 <div id="timerBar">
   <div id="timerDisplay">0:00</div>
   <div class="timer-label" id="timerLabel">Pause</div>
-  <button class="timer-stop" onclick="stopTimer()">✕ Stopp</button>
+  <button class="timer-stop" onclick="pauseTimer()" id="timerPauseBtn">⏸</button>
+  <button class="timer-stop" onclick="stopTimer()">✕</button>
 </div>
 
 </body>
