@@ -166,6 +166,26 @@
   .chip { display: inline-flex; align-items: center; gap: 4px; font-family: 'DM Mono', monospace; font-size: 10px; padding: 4px 10px; border-radius: 20px; background: rgba(200,240,96,0.1); color: var(--accent); border: 1px solid rgba(200,240,96,0.25); margin-bottom: 16px; }
 
   select.set-input { appearance: none; }
+
+  /* ── TIMER ── */
+  #timerBar {
+    margin-top: 10px; background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--r); padding: 14px 16px; display: none;
+    align-items: center; gap: 12px;
+  }
+  #timerBar.visible { display: flex; }
+  #timerDisplay {
+    font-family: 'DM Mono', monospace; font-size: 28px; font-weight: 500;
+    color: var(--accent); min-width: 72px; text-align: center;
+    transition: color 0.3s;
+  }
+  #timerDisplay.done { color: var(--success); }
+  #timerDisplay.urgent { color: var(--accent3); }
+  .timer-label { flex: 1; font-size: 12px; color: var(--muted); }
+  .timer-stop {
+    background: none; border: 1px solid var(--border); border-radius: 8px;
+    color: var(--muted); font-size: 12px; padding: 6px 12px; cursor: pointer;
+  }
   .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; display: flex; align-items: flex-end; opacity: 0; pointer-events: none; transition: opacity 0.25s; }
   .modal-overlay.open { opacity: 1; pointer-events: all; }
   .modal { background: var(--surface); border-radius: 20px 20px 0 0; border-top: 1px solid var(--border); padding: 20px; padding-bottom: max(env(safe-area-inset-bottom), 20px); width: 100%; max-height: 85dvh; overflow-y: auto; transform: translateY(40px); transition: transform 0.25s; }
@@ -200,6 +220,11 @@
         <div id="exerciseList"></div>
       </div>
       <button class="save-btn" onclick="openLogModal()" id="logBtn">+ Logg denne økta</button>
+      <div id="timerBar">
+        <div id="timerDisplay">0:00</div>
+        <div class="timer-label" id="timerLabel">Pause</div>
+        <button class="timer-stop" onclick="stopTimer()">✕ Stopp</button>
+      </div>
     </div>
 
     <!-- PROGRAM VIEW -->
@@ -232,7 +257,7 @@
       <div style="margin-top:16px">
         <button class="save-btn" onclick="copyLog()" id="copyBtn" style="background:var(--accent2)">📋 Kopier logg til utklippstavle</button>
         <div id="copyFeedback" style="margin-top:8px;font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);text-align:center;display:none">✓ Kopiert! Lim inn i chatten.</div>
-        <button class="save-btn" onclick="exportJSON()" style="background:var(--surface);border:1px solid var(--border);color:var(--text);margin-top:8px">💾 Eksporter logg som JSON (backup)</button>
+        <button class="save-btn" onclick="exportJSON()" style="background:var(--surface);border:1px solid var(--border);color:var(--text);margin-top:8px">📤 Del logg som JSON (backup)</button>
         <button class="save-btn" onclick="document.getElementById('importFile').click()" style="background:var(--surface);border:1px solid var(--border);color:var(--text);margin-top:8px">📂 Importer logg frå JSON</button>
         <input type="file" id="importFile" accept=".json" style="display:none" onchange="importJSON(event)">
         <div id="importFeedback" style="margin-top:8px;font-family:'DM Mono',monospace;font-size:11px;color:var(--success);text-align:center;display:none"></div>
@@ -267,7 +292,7 @@ const PROGRAM = {
     exercises: [
       { name: 'Squat', target: '4 × 5', pause: '3 min', note: 'Tung | +2,5 kg/veke', sets: 4, hasKg: true, startKg: 65 },
       { name: 'Deadlift', target: '3 × 6', pause: '90 sek', note: 'Lett (80% av squat)', sets: 3, hasKg: true, startKg: 52.5 },
-      { name: 'Skulderpress, sittande', target: '4 × 10–12', pause: '90 sek', note: 'Bytt til 15 kg ved 4×12', sets: 4, hasKg: true, startKg: 12.5 },
+      { name: 'Skulderpress', target: '4 × 10–12', pause: '90 sek', note: 'Bytt til 15 kg ved 4×12', sets: 4, hasKg: true, startKg: 12.5 },
       { name: 'Planke', target: '3 × maks-2', pause: '60 sek', note: 'Start ~40 sek | ikkje til failure', sets: 3, hasKg: false, isTimed: true },
     ]
   },
@@ -277,7 +302,7 @@ const PROGRAM = {
       { name: 'Benkpress', target: '4 × 5', pause: '3 min', note: 'Tung | +2,5 kg/veke', sets: 4, hasKg: true, startKg: 60 },
       { name: 'Chin-ups', target: '4 × maks-2 + 2 neg.', pause: '2 min', note: '3–5 sek ned på negatives', sets: 4, hasKg: false },
       { name: 'Horisontal rad', target: '3 × 10–12', pause: '90 sek', note: 'Under stang i cage', sets: 3, hasKg: false },
-      { name: 'Biceps curl (curl-stang)', target: '3 × 10–12', pause: '60 sek', note: 'Progressivt', sets: 3, hasKg: true, startKg: null },
+      { name: 'Biceps curl', target: '3 × 10–12', pause: '60 sek', note: 'Progressivt', sets: 3, hasKg: true, startKg: null },
     ]
   },
   C: {
@@ -366,11 +391,11 @@ const PROGRESSION = {
   // Dag A
   'Squat_A':                    { increment: 2.5 },
   'Deadlift_A':                 { linkedTo: 'Squat_A', factor: 0.8 },
-  'Skulderpress, sittande_A':   { increment: 0 },
+  'Skulderpress_A':             { increment: 0 },
 
   // Dag B
   'Benkpress_B':                { increment: 2.5 },
-  'Biceps curl (curl-stang)_B': { increment: 0 },
+  'Biceps curl_B':              { increment: 0 },
 
   // Dag C
   'Deadlift_C':                 { increment: 2.5 },
@@ -413,6 +438,13 @@ function getSuggestedKg(ex, day) {
   return null;
 }
 
+function parsePauseSec(pause) {
+  if (!pause) return 0;
+  const minMatch = pause.match(/(\d+)\s*min/);
+  const sekMatch = pause.match(/(\d+)\s*sek/);
+  return (minMatch ? parseInt(minMatch[1]) * 60 : 0) + (sekMatch ? parseInt(sekMatch[1]) : 0);
+}
+
 function renderExercises() {
   const prog = PROGRAM[currentDay];
   document.getElementById('dayLabel').textContent = prog.label;
@@ -420,14 +452,21 @@ function renderExercises() {
   list.innerHTML = prog.exercises.map((ex, i) => {
     const suggested = ex.hasKg ? getSuggestedKg(ex, currentDay) : null;
     const kgBadge = suggested !== null
-      ? `<span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);margin-left:8px">→ ${suggested} kg</span>`
-      : (ex.hasKg ? `<span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);margin-left:8px">—</span>` : '');
+      ? `<span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);margin-left:6px">→ ${suggested} kg</span>`
+      : (ex.hasKg ? `<span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);margin-left:6px">—</span>` : '');
+    const pauseSec = parsePauseSec(ex.pause);
     return `
     <div class="exercise-row">
-      <div class="ex-num">${i+1}</div>
+      <button onclick="startTimer(${pauseSec},'${ex.name}')" style="
+        flex-shrink:0; width:44px; height:44px; border-radius:10px;
+        background:rgba(96,180,240,0.1); border:1px solid rgba(96,180,240,0.25);
+        color:var(--accent2); font-size:10px; font-family:'DM Mono',monospace;
+        cursor:pointer; display:flex; flex-direction:column;
+        align-items:center; justify-content:center; gap:1px; line-height:1.2;
+      ">⏱<span>${ex.pause}</span></button>
       <div class="ex-info">
         <div class="ex-name">${ex.name}${kgBadge}</div>
-        <div class="ex-target">${ex.target} <span style="color:var(--muted)">· pause ${ex.pause}</span></div>
+        <div class="ex-target">${ex.target}</div>
         <div style="font-size:11px;color:var(--muted);margin-top:1px">${ex.note}</div>
       </div>
       <button class="ex-done ${checkedExercises[i] ? 'checked' : ''}" onclick="toggleCheck(${i})">
@@ -698,13 +737,27 @@ function bumpWeek() {
   }
 }
 
-function exportJSON() {
+async function exportJSON() {
   const data = JSON.stringify(sessions, null, 2);
+  const filename = `treningslogg_${new Date().toISOString().slice(0,10)}.json`;
+
+  // iOS Safari: bruk Web Share API med fil
+  if (navigator.share) {
+    try {
+      const file = new File([data], filename, { type: 'application/json' });
+      await navigator.share({ files: [file], title: 'Treningslogg backup' });
+      return;
+    } catch(e) {
+      if (e.name === 'AbortError') return; // Brukar avbraut – ikkje vis feil
+    }
+  }
+
+  // Fallback for desktop: last ned som fil
   const blob = new Blob([data], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `treningslogg_${new Date().toISOString().slice(0,10)}.json`;
+  a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -809,6 +862,68 @@ function copyLog() {
   });
 }
 
+// ── TIMER ─────────────────────────────────────────────────────────
+let timerInterval = null;
+let timerRemaining = 0;
+
+function playPling() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.connect(g);
+    g.connect(ctx.destination);
+    o.frequency.value = 880;
+    o.type = 'sine';
+    g.gain.setValueAtTime(0.4, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
+    o.start(ctx.currentTime);
+    o.stop(ctx.currentTime + 0.6);
+  } catch(e) {}
+}
+
+function startTimer(seconds, exName) {
+  stopTimer();
+  timerRemaining = seconds;
+  const bar = document.getElementById('timerBar');
+  const display = document.getElementById('timerDisplay');
+  const label = document.getElementById('timerLabel');
+  bar.classList.add('visible');
+  label.textContent = `Pause – ${exName}`;
+  updateTimerDisplay();
+
+  timerInterval = setInterval(() => {
+    timerRemaining--;
+    updateTimerDisplay();
+    if (timerRemaining <= 0) {
+      clearInterval(timerInterval);
+      display.textContent = '✓ Klar!';
+      display.classList.add('done');
+      display.classList.remove('urgent');
+      playPling();
+      setTimeout(() => {
+        bar.classList.remove('visible');
+        display.classList.remove('done');
+      }, 3000);
+    }
+  }, 1000);
+}
+
+function updateTimerDisplay() {
+  const display = document.getElementById('timerDisplay');
+  const m = Math.floor(timerRemaining / 60);
+  const s = timerRemaining % 60;
+  display.textContent = `${m}:${s.toString().padStart(2, '0')}`;
+  display.classList.remove('done');
+  display.classList.toggle('urgent', timerRemaining <= 10 && timerRemaining > 0);
+}
+
+function stopTimer() {
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+  const bar = document.getElementById('timerBar');
+  if (bar) bar.classList.remove('visible');
+}
+
 // ── INIT ──────────────────────────────────────────────────────────
 // Gjer funksjonar tilgjengelege globalt for inline onclick-hendingar
 window.selectDay = selectDay;
@@ -821,6 +936,8 @@ window.copyLog = copyLog;
 window.exportJSON = exportJSON;
 window.importJSON = importJSON;
 window.bumpWeek = bumpWeek;
+window.startTimer = startTimer;
+window.stopTimer = stopTimer;
 
 document.addEventListener('DOMContentLoaded', () => {
   renderExercises();
