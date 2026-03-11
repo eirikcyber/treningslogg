@@ -193,12 +193,13 @@
         <button class="day-btn active" onclick="selectDay('A',this)">DAG A</button>
         <button class="day-btn" onclick="selectDay('B',this)">DAG B</button>
         <button class="day-btn" onclick="selectDay('C',this)">DAG C</button>
+        <button class="day-btn" onclick="selectDay('K',this)" style="color:var(--accent2);border-color:var(--accent2)">🏃</button>
       </div>
       <div class="card" id="dayCard">
         <div class="card-label" id="dayLabel">Tung nedre + skulderpress</div>
         <div id="exerciseList"></div>
       </div>
-      <button class="save-btn" onclick="openLogModal()">+ Logg denne økta</button>
+      <button class="save-btn" onclick="openLogModal()" id="logBtn">+ Logg denne økta</button>
     </div>
 
     <!-- PROGRAM VIEW -->
@@ -231,6 +232,10 @@
       <div style="margin-top:16px">
         <button class="save-btn" onclick="copyLog()" id="copyBtn" style="background:var(--accent2)">📋 Kopier logg til utklippstavle</button>
         <div id="copyFeedback" style="margin-top:8px;font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);text-align:center;display:none">✓ Kopiert! Lim inn i chatten.</div>
+        <button class="save-btn" onclick="exportJSON()" style="background:var(--surface);border:1px solid var(--border);color:var(--text);margin-top:8px">💾 Eksporter logg som JSON (backup)</button>
+        <button class="save-btn" onclick="document.getElementById('importFile').click()" style="background:var(--surface);border:1px solid var(--border);color:var(--text);margin-top:8px">📂 Importer logg frå JSON</button>
+        <input type="file" id="importFile" accept=".json" style="display:none" onchange="importJSON(event)">
+        <div id="importFeedback" style="margin-top:8px;font-family:'DM Mono',monospace;font-size:11px;color:var(--success);text-align:center;display:none"></div>
       </div>
     </div>
   </div>
@@ -260,29 +265,27 @@ const PROGRAM = {
   A: {
     label: 'Tung nedre + skulderpress',
     exercises: [
-      { name: 'Squat', target: '4 × 5', note: 'Tung | 3 min pause | +2,5 kg/veke', sets: 4, hasKg: true },
-      { name: 'Deadlift', target: '3 × 6', note: 'Lett dag 80% | +2,5 kg (følg tung)', sets: 3, hasKg: true },
-      { name: 'Skulderpress (manualar)', target: '4 × 10–12', note: '90 sek pause | bytt til 20 kg ved 4×12', sets: 4, hasKg: true },
-      { name: 'Push-ups', target: '3 × 15', note: 'Roleg tempo 3-1-1 | ikkje til failure', sets: 3, hasKg: false },
+      { name: 'Squat', target: '4 × 5', pause: '3 min', note: 'Tung | +2,5 kg/veke', sets: 4, hasKg: true, startKg: 65 },
+      { name: 'Deadlift', target: '3 × 6', pause: '90 sek', note: 'Lett (80% av squat)', sets: 3, hasKg: true, startKg: 52.5 },
+      { name: 'Skulderpress, sittande', target: '4 × 10–12', pause: '90 sek', note: 'Bytt til 15 kg ved 4×12', sets: 4, hasKg: true, startKg: 12.5 },
     ]
   },
   B: {
     label: 'Tung øvre + chin-ups',
     exercises: [
-      { name: 'Benkpress', target: '4 × 5', note: 'Tung | 3 min pause | +1–2,5 kg/veke', sets: 4, hasKg: true },
-      { name: 'Chin-ups', target: '4 × maks-2 + 2 neg.', note: '2 min pause | 3–5 sek ned på negatives', sets: 4, hasKg: false },
-      { name: 'Horisontal rad', target: '3 × 10–12', note: '90 sek pause | under stang i cage', sets: 3, hasKg: false },
-      { name: 'Biceps curl (curl-stang)', target: '3 × 10–12', note: '60 sek pause | supinert grep', sets: 3, hasKg: true },
-      { name: 'Push-ups', target: '4 × 12–15', note: '60 sek pause | kan supersettast m/ curl', sets: 4, hasKg: false },
+      { name: 'Benkpress', target: '4 × 5', pause: '3 min', note: 'Tung | +2,5 kg/veke', sets: 4, hasKg: true, startKg: 60 },
+      { name: 'Chin-ups', target: '4 × maks-2 + 2 neg.', pause: '2 min', note: '3–5 sek ned på negatives', sets: 4, hasKg: false },
+      { name: 'Horisontal rad', target: '3 × 10–12', pause: '90 sek', note: 'Under stang i cage', sets: 3, hasKg: false },
+      { name: 'Biceps curl (curl-stang)', target: '3 × 10–12', pause: '60 sek', note: 'Progressivt', sets: 3, hasKg: true, startKg: null },
     ]
   },
   C: {
     label: 'Tung deadlift + squat lett + volum',
     exercises: [
-      { name: 'Deadlift', target: '4 × 4–5', note: 'Tung | 3 min pause | +2,5 kg/veke', sets: 4, hasKg: true },
-      { name: 'Squat', target: '3 × 8', note: 'Lett dag 80% | teknikk og volum', sets: 3, hasKg: true },
-      { name: 'Benkpress', target: '3 × 8–10', note: 'Lettare enn dag B | teknikk', sets: 3, hasKg: true },
-      { name: 'Chin-ups', target: '3 × maks-2', note: '90 sek pause | ikkje til failure', sets: 3, hasKg: false },
+      { name: 'Deadlift', target: '4 × 4–5', pause: '3 min', note: 'Tung | +2,5 kg/veke', sets: 4, hasKg: true, startKg: 65 },
+      { name: 'Squat', target: '3 × 8', pause: '90 sek', note: 'Lett (80% av deadlift)', sets: 3, hasKg: true, startKg: 52.5 },
+      { name: 'Benkpress', target: '3 × 8–10', pause: '90 sek', note: 'Lettare enn Dag B', sets: 3, hasKg: true, startKg: 50 },
+      { name: 'Chin-ups', target: '3 × maks-2', pause: '90 sek', note: 'Ikkje til failure', sets: 3, hasKg: false },
     ]
   }
 };
@@ -326,25 +329,111 @@ function selectDay(day, btn) {
   checkedExercises = {};
   document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  renderExercises();
+  if (day === 'K') {
+    document.getElementById('dayLabel').textContent = 'Kondis / fri økt';
+    document.getElementById('exerciseList').innerHTML = `
+      <div style="color:var(--muted);font-size:13px;padding:12px 0;line-height:1.6">
+        Logg løping, tur, assault bike eller anna kondis fritt.<br>
+        <span style="font-family:'DM Mono',monospace;font-size:11px">Bruk notafeltet for tid, distanse, intensitet.</span>
+      </div>`;
+    document.getElementById('logBtn').textContent = '+ Logg kondisøkt';
+    document.getElementById('logBtn').style.background = 'var(--accent2)';
+  } else {
+    document.getElementById('logBtn').textContent = '+ Logg denne økta';
+    document.getElementById('logBtn').style.background = 'var(--accent)';
+    renderExercises();
+  }
+}
+
+// Finn siste loggførte kg for ei øving (søk bakover i tid)
+function getLastKg(exName) {
+  for (const s of sessions) {
+    for (const ex of s.exercises) {
+      if (ex.name === exName && ex.hasKg && ex.sets.length > 0) {
+        const kg = parseFloat(ex.sets[0].kg);
+        if (!isNaN(kg)) return kg;
+      }
+    }
+  }
+  return null;
+}
+
+// Progresjonsreglar per øving
+// increment: kor mykje å leggje på
+// linkedTo: hent vekt frå ei anna øving og gang med factor
+const PROGRESSION = {
+  // Dag A
+  'Squat_A':                    { increment: 2.5 },
+  'Deadlift_A':                 { linkedTo: 'Squat_A', factor: 0.8 },
+  'Skulderpress, sittande_A':   { increment: 0 },
+
+  // Dag B
+  'Benkpress_B':                { increment: 2.5 },
+  'Biceps curl (curl-stang)_B': { increment: 0 },
+
+  // Dag C
+  'Deadlift_C':                 { increment: 2.5 },
+  'Squat_C':                    { linkedTo: 'Deadlift_C', factor: 0.8 },
+  'Benkpress_C':                { linkedTo: 'Benkpress_B', factor: 1.0 },
+};
+
+function round(kg) {
+  // Rund til nærmaste 0.5 kg (mikrovekter)
+  return Math.round(kg * 2) / 2;
+}
+
+function getSuggestedKg(ex, day) {
+  const key = `${ex.name}_${day}`;
+  const rule = PROGRESSION[key];
+
+  if (rule && rule.linkedTo) {
+    // Avleia vekt frå ei anna øving
+    const [linkedName, linkedDay] = rule.linkedTo.split('_');
+    const linkedEx = Object.values(PROGRAM).flatMap(d => d.exercises).find(e => e.name === linkedName);
+    const linkedLast = getLastKg(linkedName);
+    let base;
+    if (linkedLast !== null) {
+      // Legg til increment på den øvinga fyrst, så gang med factor
+      const linkedRule = PROGRESSION[rule.linkedTo];
+      base = (linkedLast + (linkedRule?.increment || 0)) * rule.factor;
+    } else {
+      base = (linkedEx?.startKg || 0) * rule.factor;
+    }
+    return round(base);
+  }
+
+  const last = getLastKg(ex.name);
+  if (last !== null) {
+    return round(last + (rule?.increment || 0));
+  }
+
+  // Ingen logg – bruk startKg
+  if (ex.startKg !== null && ex.startKg !== undefined) return ex.startKg;
+  return null;
 }
 
 function renderExercises() {
   const prog = PROGRAM[currentDay];
   document.getElementById('dayLabel').textContent = prog.label;
   const list = document.getElementById('exerciseList');
-  list.innerHTML = prog.exercises.map((ex, i) => `
+  list.innerHTML = prog.exercises.map((ex, i) => {
+    const suggested = ex.hasKg ? getSuggestedKg(ex, currentDay) : null;
+    const kgBadge = suggested !== null
+      ? `<span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);margin-left:8px">→ ${suggested} kg</span>`
+      : (ex.hasKg ? `<span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);margin-left:8px">—</span>` : '');
+    return `
     <div class="exercise-row">
       <div class="ex-num">${i+1}</div>
       <div class="ex-info">
-        <div class="ex-name">${ex.name}</div>
-        <div class="ex-target">${ex.target}</div>
+        <div class="ex-name">${ex.name}${kgBadge}</div>
+        <div class="ex-target">${ex.target} <span style="color:var(--muted)">· pause ${ex.pause}</span></div>
+        <div style="font-size:11px;color:var(--muted);margin-top:1px">${ex.note}</div>
       </div>
       <button class="ex-done ${checkedExercises[i] ? 'checked' : ''}" onclick="toggleCheck(${i})">
         ${checkedExercises[i] ? '✓' : ''}
       </button>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
 }
 
 function toggleCheck(i) {
@@ -354,10 +443,32 @@ function toggleCheck(i) {
 
 // ── MODAL ─────────────────────────────────────────────────────────
 function openLogModal() {
+  const today = new Date().toLocaleDateString('no-NO', { day:'2-digit', month:'2-digit', year:'numeric' });
+
+  if (currentDay === 'K') {
+    document.getElementById('modalTitle').textContent = 'Logg kondisøkt';
+    document.getElementById('modalSub').textContent = 'Løping · Tur · Assault bike · Anna';
+    document.getElementById('modalBody').innerHTML = `
+      <div class="field-label">Dato</div>
+      <input class="set-input" id="logDate" value="${today}" placeholder="DD.MM.ÅÅÅÅ">
+      <div class="field-label" style="margin-top:14px">Type</div>
+      <select class="set-input" id="kondisType">
+        <option>Løping</option>
+        <option>Tur</option>
+        <option>Assault bike</option>
+        <option>Anna</option>
+      </select>
+      <div class="field-label" style="margin-top:14px">Tid</div>
+      <input class="set-input" id="kondisTid" placeholder="t.d. 45 min" inputmode="text">
+      <div class="field-label" style="margin-top:14px">Notat (distanse, intensitet, rute…)</div>
+      <textarea class="note-input" id="logNote" placeholder="t.d. 5 km, moderat tempo, Nesbru–Billingstad"></textarea>`;
+    document.getElementById('logModal').classList.add('open');
+    return;
+  }
+
   const prog = PROGRAM[currentDay];
   document.getElementById('modalTitle').textContent = `Logg dag ${currentDay}`;
   document.getElementById('modalSub').textContent = prog.label;
-  const today = new Date().toLocaleDateString('no-NO', { day:'2-digit', month:'2-digit', year:'numeric' });
 
   let html = `<div class="field-label">Dato</div>
     <input class="set-input" id="logDate" value="${today}" placeholder="DD.MM.ÅÅÅÅ">`;
@@ -374,10 +485,12 @@ function openLogModal() {
         <div style="flex:1;text-align:center;font-family:'DM Mono',monospace;font-size:10px;color:var(--muted)">reps</div>
       </div>`;
       for (let s = 1; s <= ex.sets; s++) {
+        const suggested = getSuggestedKg(ex, currentDay);
+        const kgVal = suggested !== null ? suggested : '';
         html += `<div class="set-row" style="margin-bottom:6px">
           <div class="set-label">Sett ${s}</div>
           <div class="kg-reps-row">
-            <input class="set-input" id="ex${ei}_s${s}_kg" placeholder="0" inputmode="decimal" style="text-align:center">
+            <input class="set-input" id="ex${ei}_s${s}_kg" value="${kgVal}" placeholder="0" inputmode="decimal" style="text-align:center">
             <div class="kg-reps-sep">×</div>
             <input class="set-input" id="ex${ei}_s${s}_reps" placeholder="0" inputmode="numeric" style="text-align:center">
           </div>
@@ -409,8 +522,24 @@ function closeModal(e) {
 }
 
 function saveSession() {
-  const prog = PROGRAM[currentDay];
   const date = document.getElementById('logDate').value || new Date().toLocaleDateString('no-NO');
+  const weekNum = getCurrentWeek();
+
+  if (currentDay === 'K') {
+    const type = document.getElementById('kondisType').value;
+    const tid = document.getElementById('kondisTid').value;
+    const note = document.getElementById('logNote').value;
+    sessions.unshift({ date, day: 'K', kondisType: type, kondisTid: tid, note, week: weekNum });
+    save();
+    document.getElementById('logModal').classList.remove('open');
+    updateWeekBadge();
+    const btn = document.getElementById('logBtn');
+    btn.textContent = '✓ Lagra!';
+    setTimeout(() => { btn.textContent = '+ Logg kondisøkt'; }, 2000);
+    return;
+  }
+
+  const prog = PROGRAM[currentDay];
   const note = document.getElementById('logNote').value;
   const exercises = prog.exercises.map((ex, ei) => {
     const sets = [];
@@ -429,7 +558,6 @@ function saveSession() {
 
   if (!exercises.length) { alert('Fyll inn minst eitt sett!'); return; }
 
-  const weekNum = getCurrentWeek();
   sessions.unshift({ date, day: currentDay, exercises, note, week: weekNum });
   save();
   document.getElementById('logModal').classList.remove('open');
@@ -473,24 +601,33 @@ function renderHistory() {
     cont.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-text">Ingen økter logga enno.<br>Logg fyrste økt frå «I dag»-fana!</div></div>`;
     return;
   }
-  cont.innerHTML = sessions.map(s => `
-    <div class="hist-entry">
-      <div class="hist-date">Veke ${s.week || '–'} · ${s.date}</div>
-      <div class="hist-card">
-        <div class="hist-day-tag">DAG ${s.day}</div>
-        ${s.exercises.map(ex => {
-          const setsStr = ex.sets.map(set =>
-            ex.hasKg ? `${set.kg}kg×${set.reps}` : `${set.reps}reps`
-          ).join(' / ');
-          return `<div class="hist-ex-line">
-            <span>${ex.name}</span>
-            <span class="hist-ex-sets">${setsStr}</span>
-          </div>`;
-        }).join('')}
-        ${s.note ? `<div style="margin-top:8px;font-size:12px;color:var(--muted);font-style:italic">"${s.note}"</div>` : ''}
-      </div>
-    </div>
-  `).join('');
+  cont.innerHTML = sessions.map(s => {
+    if (s.day === 'K') {
+      return `
+        <div class="hist-entry">
+          <div class="hist-date">Veke ${s.week || '–'} · ${s.date}</div>
+          <div class="hist-card" style="border-left:3px solid var(--accent2)">
+            <div class="hist-day-tag" style="color:var(--accent2)">🏃 ${s.kondisType || 'Kondis'}</div>
+            ${s.kondisTid ? `<div class="hist-ex-line"><span>Tid</span><span class="hist-ex-sets">${s.kondisTid}</span></div>` : ''}
+            ${s.note ? `<div style="margin-top:6px;font-size:12px;color:var(--muted);font-style:italic">"${s.note}"</div>` : ''}
+          </div>
+        </div>`;
+    }
+    return `
+      <div class="hist-entry">
+        <div class="hist-date">Veke ${s.week || '–'} · ${s.date}</div>
+        <div class="hist-card">
+          <div class="hist-day-tag">DAG ${s.day}</div>
+          ${s.exercises.map(ex => {
+            const setsStr = ex.sets.map(set =>
+              ex.hasKg ? `${set.kg}kg×${set.reps}` : `${set.reps}reps`
+            ).join(' / ');
+            return `<div class="hist-ex-line"><span>${ex.name}</span><span class="hist-ex-sets">${setsStr}</span></div>`;
+          }).join('')}
+          ${s.note ? `<div style="margin-top:8px;font-size:12px;color:var(--muted);font-style:italic">"${s.note}"</div>` : ''}
+        </div>
+      </div>`;
+  }).join('');
 }
 
 // ── PROGRESS ──────────────────────────────────────────────────────
@@ -556,6 +693,47 @@ function bumpWeek() {
     updateWeekBadge();
     renderProgress();
   }
+}
+
+function exportJSON() {
+  const data = JSON.stringify(sessions, null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `treningslogg_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importJSON(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const imported = JSON.parse(e.target.result);
+      if (!Array.isArray(imported)) throw new Error('Ugyldig format');
+      // Merge: legg til økter som ikkje allereie finst (basert på dato+dag)
+      const existing = new Set(sessions.map(s => `${s.date}_${s.day}`));
+      const newSessions = imported.filter(s => !existing.has(`${s.date}_${s.day}`));
+      sessions = [...sessions, ...newSessions].sort((a, b) => {
+        // Sort by date descending (norwegian format DD.MM.YYYY)
+        const parse = d => { const p = d.split('.'); return new Date(`${p[2]}-${p[1]}-${p[0]}`); };
+        return parse(b.date) - parse(a.date);
+      });
+      save();
+      renderExercises();
+      const fb = document.getElementById('importFeedback');
+      fb.textContent = `✓ Importert ${newSessions.length} nye økter!`;
+      fb.style.display = 'block';
+      setTimeout(() => fb.style.display = 'none', 4000);
+    } catch(err) {
+      alert('Feil ved import: ' + err.message);
+    }
+    event.target.value = '';
+  };
+  reader.readAsText(file);
 }
 
 // ── EKSPORT ───────────────────────────────────────────────────────
@@ -629,9 +807,23 @@ function copyLog() {
 }
 
 // ── INIT ──────────────────────────────────────────────────────────
-renderExercises();
-renderProgramView();
-updateWeekBadge();
+// Gjer funksjonar tilgjengelege globalt for inline onclick-hendingar
+window.selectDay = selectDay;
+window.toggleCheck = toggleCheck;
+window.showView = showView;
+window.openLogModal = openLogModal;
+window.closeModal = closeModal;
+window.saveSession = saveSession;
+window.copyLog = copyLog;
+window.exportJSON = exportJSON;
+window.importJSON = importJSON;
+window.bumpWeek = bumpWeek;
+
+document.addEventListener('DOMContentLoaded', () => {
+  renderExercises();
+  renderProgramView();
+  updateWeekBadge();
+});
 </script>
 </body>
 </html>
