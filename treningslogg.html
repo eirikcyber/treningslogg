@@ -210,7 +210,7 @@
   <div id="content">
     <!-- TODAY VIEW -->
     <div class="view active" id="view-today">
-      <div class="chip">📅 I dag</div>
+      <div class="chip" id="daysSinceChip">📅 I dag</div>
       <div class="day-selector">
         <button class="day-btn active" onclick="selectDay('A',this)">DAG A</button>
         <button class="day-btn" onclick="selectDay('B',this)">DAG B</button>
@@ -614,8 +614,94 @@ function saveSession() {
 }
 
 // ── PROGRAM VIEW ──────────────────────────────────────────────────
+const PERIODISERING = [
+  { fase: 'Akkumulering', veker: '1–4',  fokus: 'Bygg volum, lær teknikk', sett: '4 × 5–6' },
+  { fase: 'Intensifikasjon', veker: '5–8', fokus: 'Auke vekt konsekvent',  sett: '4 × 4–5' },
+  { fase: 'Topping',       veker: '9–11', fokus: 'Tunge sett, færre reps', sett: '4 × 3'   },
+  { fase: 'Deload',        veker: '12',   fokus: '60–70 % vekt, halvt volum', sett: '3 × 4' },
+];
+
 function renderProgramView() {
+  const week = getCurrentWeek();
   const cont = document.getElementById('programContent');
+
+  // Periodisering
+  const periodHtml = `
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-label">Periodisering</div>
+      ${PERIODISERING.map(p => {
+        const veker = p.veker.includes('–')
+          ? (() => { const [a,b] = p.veker.split('–').map(Number); return Array.from({length:b-a+1},(_,i)=>a+i); })()
+          : [parseInt(p.veker)];
+        const active = veker.includes(week);
+        return `<div class="pr-row" style="${active ? 'background:rgba(200,240,96,0.06);border-radius:8px;padding:8px;' : ''}">
+          <div>
+            <div style="font-size:13px;font-weight:500;color:${active ? 'var(--accent)' : 'var(--text)'}">${p.fase} ${active ? '◀' : ''}</div>
+            <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace">Veke ${p.veker} · ${p.sett}</div>
+          </div>
+          <div style="font-size:11px;color:var(--muted);text-align:right;max-width:130px">${p.fokus}</div>
+        </div>`;
+      }).join('')}
+    </div>`;
+
+  // Chin-up plan
+  const chinHtml = `
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-label">Chin-up progresjon</div>
+      ${CHINUP_PLAN.map(row => `
+        <div class="pr-row" style="${row.veke === week ? 'background:rgba(200,240,96,0.06);border-radius:8px;padding:8px;' : ''}">
+          <span style="font-family:'DM Mono',monospace;font-size:11px;color:${row.veke === week ? 'var(--accent)' : 'var(--muted)'}">
+            Veke ${row.veke}${row.veke === week ? ' ◀' : ''}
+          </span>
+          <span style="font-size:12px;color:${row.veke === week ? 'var(--text)' : 'var(--muted)'}">
+            B: ${row.dagB} · C: ${row.dagC}
+          </span>
+        </div>
+      `).join('')}
+    </div>`;
+
+  const tbl = (rows) => `<table style="width:100%;border-collapse:collapse;font-size:12px">
+    ${rows.map((r,i) => `<tr style="border-top:${i?'1px solid var(--border)':'none'}">
+      ${r.map((c,ci) => `<td style="padding:6px 4px;color:${ci===0?'var(--muted)':'var(--text)'};font-family:${ci===0?"'DM Mono',monospace":'inherit'};font-size:${ci===0?'11px':'12px'}">${c}</td>`).join('')}
+    </tr>`).join('')}
+  </table>`;
+
+  const startpunktHtml = `
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-label">Startpunkt</div>
+      ${tbl([
+        ['Squat (tung)',         '65 kg', '4 × 5',      '+2,5 kg/veke'],
+        ['Deadlift (tung)',      '60 kg', '4 × 4–5',    '+2,5 kg/veke'],
+        ['Deadlift lett (Dag A)','60 kg', '3 × 6',      '80 % av tung'],
+        ['Squat lett (Dag C)',   '52,5 kg','3 × 8',     '80 % av tung'],
+        ['Benkpress',           '60 kg', '4 × 5',      '+2,5 kg/veke'],
+        ['Skulderpress',        '12,5 kg','4 × 12',    'sjå progresjon'],
+        ['Chin-ups',            'kroppsvekt','4 × maks-2','sjå plan'],
+        ['Horisontal rad',      'kroppsvekt','3 × 10–12','auke vanskegr.'],
+        ['Biceps curl',         '—',     '3 × 10–12',  'progressivt'],
+      ])}
+      <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+        <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;font-family:'DM Mono',monospace">SKULDERPRESS – utan 15 kg</div>
+        <div style="font-size:12px;color:var(--muted)">4×12 → 4×14 → 4×16 → 3×8 med 20 kg (bygg opp att)</div>
+      </div>
+    </div>`;
+
+  const oppvarmingHtml = `
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-label">Oppvarming</div>
+      <div style="font-size:12px;font-weight:600;color:var(--accent2);margin:8px 0 4px">Dag A – Squat (65 kg)</div>
+      ${tbl([['20 kg','8–10 reps'],['40 kg','5 reps'],['55 kg','3 reps'],['65 kg →','4 × 5 arbeidssett']])}
+      <div style="font-size:11px;color:var(--muted);margin-top:4px">Deadlift: 1–2 lette sett (40–50 kg × 5) – kroppen er varm frå squat.</div>
+
+      <div style="font-size:12px;font-weight:600;color:var(--accent2);margin:12px 0 4px">Dag B – Benkpress (60 kg)</div>
+      ${tbl([['20 kg','8–10 reps'],['40 kg','5 reps'],['52,5 kg','2–3 reps'],['60 kg →','4 × 5 arbeidssett']])}
+      <div style="font-size:11px;color:var(--muted);margin-top:4px">Chin-ups, rad og curl treng inga eigen oppvarming.</div>
+
+      <div style="font-size:12px;font-weight:600;color:var(--accent2);margin:12px 0 4px">Dag C – Deadlift (60 kg)</div>
+      ${tbl([['20 kg','6–8 reps'],['40 kg','5 reps'],['52,5 kg','2–3 reps'],['60 kg →','4 × 4–5 arbeidssett']])}
+      <div style="font-size:11px;color:var(--muted);margin-top:4px">Squat lett etterpå treng ingen eigen oppvarming.</div>
+    </div>`;
+
   cont.innerHTML = Object.entries(PROGRAM).map(([day, data]) => `
     <div class="prog-day">
       <div class="prog-header">
@@ -624,7 +710,7 @@ function renderProgramView() {
       <div class="prog-body">
         ${data.exercises.map(ex => `
           <div class="prog-ex">
-            <div class="prog-ex-name">${ex.name}</div>
+            <div class="prog-ex-name">${ex.supersetLabel ? `<span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--accent3);margin-right:4px">${ex.supersetLabel}</span>` : ''}${ex.name}</div>
             <div class="prog-ex-detail">
               <span class="tag sets">${ex.target}</span>
               <span class="tag note">${ex.note}</span>
@@ -633,7 +719,7 @@ function renderProgramView() {
         `).join('')}
       </div>
     </div>
-  `).join('');
+  `).join('') + periodHtml + chinHtml + startpunktHtml + oppvarmingHtml;
 }
 
 // ── HISTORY ───────────────────────────────────────────────────────
@@ -717,6 +803,33 @@ function renderProgress() {
 }
 
 // ── HELPERS ───────────────────────────────────────────────────────
+function getNextDay() {
+  // Finn neste styrkedag basert på siste loggførte styrkeøkt
+  const lastStrength = sessions.find(s => s.day !== 'K');
+  if (!lastStrength) return 'A';
+  const order = ['A', 'B', 'C'];
+  const idx = order.indexOf(lastStrength.day);
+  return order[(idx + 1) % 3];
+}
+
+function getDaysSinceLast() {
+  const last = sessions.find(s => s.day !== 'K');
+  if (!last) return null;
+  const parse = d => { const p = d.split('.'); return new Date(`${p[2]}-${p[1]}-${p[0]}`); };
+  const diff = Math.floor((new Date() - parse(last.date)) / 86400000);
+  return diff;
+}
+
+function updateDaysSinceChip() {
+  const chip = document.getElementById('daysSinceChip');
+  if (!chip) return;
+  const days = getDaysSinceLast();
+  if (days === null) { chip.textContent = '📅 Fyrste økt'; return; }
+  if (days === 0) { chip.textContent = '📅 Sist økt: i dag'; return; }
+  if (days === 1) { chip.textContent = '📅 Sist økt: i går'; return; }
+  chip.textContent = `📅 ${days} dagar sidan sist økt`;
+}
+
 function getCurrentWeek() {
   if (!sessions.length) return 1;
   return sessions[0].week || 1;
@@ -967,9 +1080,16 @@ window.pauseTimer = pauseTimer;
 // ── INIT ──────────────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Auto-vel neste styrkedag
+  const nextDay = getNextDay();
+  currentDay = nextDay;
+  document.querySelectorAll('.day-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.textContent.trim() === `DAG ${nextDay}` || (nextDay === 'K' && btn.textContent.includes('🏃')));
+  });
   renderExercises();
   renderProgramView();
   updateWeekBadge();
+  updateDaysSinceChip();
 });
 </script>
 
