@@ -305,7 +305,7 @@ const PROGRAM = {
   C: {
     label: 'Tung deadlift + squat lett + volum',
     exercises: [
-      { name: 'Deadlift',  target: '4 × 4–5',  pause: '3 min',  note: 'Tung | +2,5 kg/veke', sets: 4, hasKg: true,  startKg: 60,   supersetWith: 'Chin-ups', supersetLabel: '1a' },
+      { name: 'Deadlift',  target: '4 × 4–5',  pause: '3 min',  note: 'Tung | +2,5 kg/veke', sets: 4, hasKg: true,  startKg: 62.5, supersetWith: 'Chin-ups', supersetLabel: '1a' },
       { name: 'Chin-ups',  target: '3 × maks-2', pause: '3 min', note: 'I pausen til deadlift', sets: 3, hasKg: false, supersetWith: 'Deadlift', supersetLabel: '1b' },
       { name: 'Squat',     target: '3 × 8',    pause: '90 sek', note: 'Lett (80% av deadlift tung)', sets: 3, hasKg: true,  startKg: 52.5 },
       { name: 'Benkpress', target: '3 × 8–10', pause: '90 sek', note: 'Lettare enn Dag B', sets: 3, hasKg: true,  startKg: 50 },
@@ -402,25 +402,17 @@ function getSuggestedKg(ex, day) {
   const rule = PROGRESSION[key];
 
   if (rule && rule.linkedTo) {
-    // Avleia vekt frå ei anna øving
-    const [linkedName, linkedDay] = rule.linkedTo.split('_');
-    const linkedEx = Object.values(PROGRAM).flatMap(d => d.exercises).find(e => e.name === linkedName);
+    // Avleia vekt frå ei anna øving (t.d. Squat_C = 80% av Deadlift_C)
+    const linkedName = rule.linkedTo.split('_')[0];
     const linkedLast = getLastKg(linkedName);
-    let base;
-    if (linkedLast !== null) {
-      // Legg til increment på den øvinga fyrst, så gang med factor
-      const linkedRule = PROGRESSION[rule.linkedTo];
-      base = (linkedLast + (linkedRule?.increment || 0)) * rule.factor;
-    } else {
-      base = (linkedEx?.startKg || 0) * rule.factor;
-    }
-    return round(base);
+    const linkedEx = Object.values(PROGRAM).flatMap(d => d.exercises).find(e => e.name === linkedName);
+    const base = linkedLast !== null ? linkedLast : (linkedEx?.startKg || 0);
+    return round(base * rule.factor);
   }
 
+  // Vis siste loggførte vekt – brukaren legg på kg sjølv når klar
   const last = getLastKg(ex.name);
-  if (last !== null) {
-    return round(last + (rule?.increment || 0));
-  }
+  if (last !== null) return last;
 
   // Ingen logg – bruk startKg
   if (ex.startKg !== null && ex.startKg !== undefined) return ex.startKg;
@@ -441,6 +433,8 @@ function getPlanReps(ex) {
   return m ? parseInt(m[1]) : '';
 }
 
+const setCounters = {}; // { exIndex: currentSet }
+
 function renderExercises() {
   const prog = PROGRAM[currentDay];
   document.getElementById('dayLabel').textContent = prog.label;
@@ -454,9 +448,17 @@ function renderExercises() {
     const ssLabel = ex.supersetLabel
       ? `<span style="font-family:'DM Mono',monospace;font-size:11px;background:rgba(240,96,160,0.15);color:var(--accent3);border:1px solid rgba(240,96,160,0.3);border-radius:4px;padding:1px 6px;margin-right:4px">${ex.supersetLabel}</span>`
       : `<span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);margin-right:4px">${i+1}</span>`;
+    const cur = setCounters[i] || 0;
+    const setCountHtml = `<div onclick="bumpSet(${i},${ex.sets})" style="
+      flex-shrink:0; min-width:44px; text-align:center; cursor:pointer;
+      font-family:'Syne',sans-serif; line-height:1;
+    ">
+      <div style="font-size:${cur > 0 ? '28px' : '20px'};font-weight:800;color:${cur >= ex.sets ? 'var(--success)' : cur > 0 ? 'var(--accent)' : 'var(--border)'}">${cur > 0 ? cur : '·'}</div>
+      <div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace">/${ex.sets}</div>
+    </div>`;
     return `
     <div class="exercise-row" style="${ex.supersetLabel === '1b' ? 'border-top:1px dashed rgba(240,96,160,0.2);margin-top:-1px' : ''}">
-      <button onclick="startTimer(${pauseSec},'${ex.name}')" style="
+      <button onclick="startTimerEx(${pauseSec},'${ex.name}',${i},${ex.sets})" style="
         flex-shrink:0; width:44px; height:44px; border-radius:10px;
         background:rgba(96,180,240,0.1); border:1px solid rgba(96,180,240,0.25);
         color:var(--accent2); font-size:10px; font-family:'DM Mono',monospace;
@@ -468,16 +470,23 @@ function renderExercises() {
         <div class="ex-target">${ex.target}</div>
         <div style="font-size:11px;color:var(--muted);margin-top:1px">${ex.note}</div>
       </div>
-      <button class="ex-done ${checkedExercises[i] ? 'checked' : ''}" onclick="toggleCheck(${i})">
-        ${checkedExercises[i] ? '✓' : ''}
-      </button>
+      ${setCountHtml}
     </div>`;
   }).join('');
 }
 
-function toggleCheck(i) {
-  checkedExercises[i] = !checkedExercises[i];
+function bumpSet(exIdx, total) {
+  const cur = setCounters[exIdx] || 0;
+  setCounters[exIdx] = cur >= total ? 0 : cur + 1;
   renderExercises();
+}
+
+function startTimerEx(seconds, exName, exIdx, total) {
+  // Tel opp sett og start timer
+  const cur = setCounters[exIdx] || 0;
+  if (cur < total) setCounters[exIdx] = cur + 1;
+  renderExercises();
+  startTimer(seconds, exName);
 }
 
 // ── MODAL ─────────────────────────────────────────────────────────
@@ -537,16 +546,34 @@ function openLogModal() {
         </div>`;
       }
     } else {
+      const isChinup = ex.name === 'Chin-ups';
       const unit = ex.isTimed ? 'sek' : 'reps';
-      html += `<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;padding-left:46px">
-        <div style="flex:1;text-align:center;font-family:'DM Mono',monospace;font-size:10px;color:var(--muted)">${unit}</div>
-      </div>`;
-      for (let s = 1; s <= ex.sets; s++) {
-        const planVal = ex.planReps || '';
-        html += `<div class="set-row" style="margin-bottom:6px">
-          <div class="set-label">Sett ${s}</div>
-          <input class="set-input" id="ex${ei}_s${s}_reps" value="${planVal}" placeholder="${ex.isTimed ? '0 sek' : '0'}" inputmode="numeric" style="text-align:center">
+      if (isChinup) {
+        html += `<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;padding-left:46px">
+          <div style="flex:1;text-align:center;font-family:'DM Mono',monospace;font-size:10px;color:var(--muted)">reps</div>
+          <div style="flex:1;text-align:center;font-family:'DM Mono',monospace;font-size:10px;color:var(--accent3)">neg.</div>
         </div>`;
+        for (let s = 1; s <= ex.sets; s++) {
+          html += `<div class="set-row" style="margin-bottom:6px">
+            <div class="set-label">Sett ${s}</div>
+            <div class="kg-reps-row">
+              <input class="set-input" id="ex${ei}_s${s}_reps" value="" placeholder="0" inputmode="numeric" style="text-align:center">
+              <div class="kg-reps-sep" style="color:var(--accent3)">+</div>
+              <input class="set-input" id="ex${ei}_s${s}_neg" value="" placeholder="0" inputmode="numeric" style="text-align:center;border-color:rgba(240,96,160,0.3)">
+            </div>
+          </div>`;
+        }
+      } else {
+        html += `<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;padding-left:46px">
+          <div style="flex:1;text-align:center;font-family:'DM Mono',monospace;font-size:10px;color:var(--muted)">${unit}</div>
+        </div>`;
+        for (let s = 1; s <= ex.sets; s++) {
+          const planVal = ex.planReps || '';
+          html += `<div class="set-row" style="margin-bottom:6px">
+            <div class="set-label">Sett ${s}</div>
+            <input class="set-input" id="ex${ei}_s${s}_reps" value="${planVal}" placeholder="${ex.isTimed ? '0 sek' : '0'}" inputmode="numeric" style="text-align:center">
+          </div>`;
+        }
       }
     }
     html += `</div>`;
@@ -592,7 +619,8 @@ function saveSession() {
         if (kg || reps) sets.push({ kg: kg || '–', reps: reps || '–' });
       } else {
         const reps = document.getElementById(`ex${ei}_s${s}_reps`)?.value;
-        if (reps) sets.push({ reps });
+        const neg = document.getElementById(`ex${ei}_s${s}_neg`)?.value;
+        if (reps) sets.push({ reps, ...(neg ? { neg } : {}) });
       }
     }
     return { name: ex.name, hasKg: ex.hasKg, sets };
@@ -604,6 +632,7 @@ function saveSession() {
   save();
   document.getElementById('logModal').classList.remove('open');
   checkedExercises = {};
+  Object.keys(setCounters).forEach(k => delete setCounters[k]);
   renderExercises();
   updateWeekBadge();
 
@@ -733,7 +762,7 @@ function renderHistory() {
     if (s.day === 'K') {
       return `
         <div class="hist-entry">
-          <div class="hist-date">Veke ${s.week || '–'} · ${s.date}</div>
+          <div class="hist-date">Veke ${getWeekFromDate(s.date)} · ${s.date}</div>
           <div class="hist-card" style="border-left:3px solid var(--accent2)">
             <div class="hist-day-tag" style="color:var(--accent2)">🏃 ${s.kondisType || 'Kondis'}</div>
             ${s.kondisTid ? `<div class="hist-ex-line"><span>Tid</span><span class="hist-ex-sets">${s.kondisTid}</span></div>` : ''}
@@ -743,12 +772,12 @@ function renderHistory() {
     }
     return `
       <div class="hist-entry">
-        <div class="hist-date">Veke ${s.week || '–'} · ${s.date}</div>
+        <div class="hist-date">Veke ${getWeekFromDate(s.date)} · ${s.date}</div>
         <div class="hist-card">
           <div class="hist-day-tag">DAG ${s.day}</div>
           ${s.exercises.map(ex => {
             const setsStr = ex.sets.map(set =>
-              ex.hasKg ? `${set.kg}kg×${set.reps}` : `${set.reps}reps`
+              ex.hasKg ? `${set.kg}kg×${set.reps}` : (set.neg ? `${set.reps}+${set.neg}neg` : `${set.reps}reps`)
             ).join(' / ');
             return `<div class="hist-ex-line"><span>${ex.name}</span><span class="hist-ex-sets">${setsStr}</span></div>`;
           }).join('')}
@@ -830,24 +859,25 @@ function updateDaysSinceChip() {
   chip.textContent = `📅 ${days} dagar sidan sist økt`;
 }
 
+function getWeekFromDate(dateStr) {
+  // dateStr format: DD.MM.YYYY
+  if (!dateStr) return getCurrentWeek();
+  const p = dateStr.split('.');
+  const d = new Date(`${p[2]}-${p[1]}-${p[0]}`);
+  const start = new Date('2026-03-11');
+  const diffDays = Math.floor((d - start) / 86400000);
+  return Math.min(12, Math.max(1, Math.floor(diffDays / 7) + 1));
+}
 function getCurrentWeek() {
-  if (!sessions.length) return 1;
-  return sessions[0].week || 1;
+  const start = new Date('2026-03-11');
+  const now = new Date();
+  const diffDays = Math.floor((now - start) / 86400000);
+  const week = Math.min(12, Math.max(1, Math.floor(diffDays / 7) + 1));
+  return week;
 }
 
 function updateWeekBadge() {
   document.getElementById('weekBadge').textContent = `Veke ${getCurrentWeek()}`;
-}
-
-// Week input in progress view (simple prompt)
-function bumpWeek() {
-  const w = parseInt(prompt('Kva veke er du på?'));
-  if (w && w >= 1 && w <= 12) {
-    if (sessions.length) sessions[0].week = w;
-    save();
-    updateWeekBadge();
-    renderProgress();
-  }
 }
 
 async function exportJSON() {
@@ -977,7 +1007,9 @@ function copyLog() {
 
 // ── TIMER ─────────────────────────────────────────────────────────
 let timerInterval = null;
-let timerRemaining = 0;
+let timerEndTime = null;   // absolutt sluttidspunkt (ms)
+let timerPaused = false;
+let timerRemaining = 0;    // brukt berre ved pause
 
 function playPling() {
   try {
@@ -997,74 +1029,71 @@ function playPling() {
 
 function startTimer(seconds, exName) {
   stopTimer();
-  timerRemaining = seconds;
+  timerEndTime = Date.now() + seconds * 1000;
+  timerPaused = false;
   const bar = document.getElementById('timerBar');
-  const display = document.getElementById('timerDisplay');
   const label = document.getElementById('timerLabel');
+  const btn = document.getElementById('timerPauseBtn');
   bar.classList.add('visible');
   label.textContent = `Pause – ${exName}`;
-  updateTimerDisplay();
-
-  timerInterval = setInterval(() => {
-    timerRemaining--;
-    updateTimerDisplay();
-    if (timerRemaining <= 0) {
-      clearInterval(timerInterval);
-      display.textContent = '✓ Klar!';
-      display.classList.add('done');
-      display.classList.remove('urgent');
-      playPling();
-      setTimeout(() => {
-        bar.classList.remove('visible');
-        display.classList.remove('done');
-      }, 3000);
-    }
-  }, 1000);
+  btn.textContent = '⏸';
+  tickTimer();
+  timerInterval = setInterval(tickTimer, 500); // 500ms for å fange opp raskare
 }
 
-function updateTimerDisplay() {
+function tickTimer() {
   const display = document.getElementById('timerDisplay');
-  const m = Math.floor(timerRemaining / 60);
-  const s = timerRemaining % 60;
+  const remaining = Math.max(0, Math.round((timerEndTime - Date.now()) / 1000));
+  const m = Math.floor(remaining / 60);
+  const s = remaining % 60;
   display.textContent = `${m}:${s.toString().padStart(2, '0')}`;
   display.classList.remove('done');
-  display.classList.toggle('urgent', timerRemaining <= 10 && timerRemaining > 0);
+  display.classList.toggle('urgent', remaining <= 10 && remaining > 0);
+
+  if (remaining <= 0) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+    display.textContent = '✓ Klar!';
+    display.classList.add('done');
+    display.classList.remove('urgent');
+    playPling();
+    setTimeout(() => {
+      document.getElementById('timerBar').classList.remove('visible');
+      display.classList.remove('done');
+    }, 3000);
+  }
 }
+
+function updateTimerDisplay() {} // ikkje lenger i bruk, behaldast for tryggleik
 
 function pauseTimer() {
   const btn = document.getElementById('timerPauseBtn');
-  if (timerInterval) {
+  if (!timerPaused && timerInterval) {
+    // Pause: lagre gjenverande tid
+    timerRemaining = Math.max(0, Math.round((timerEndTime - Date.now()) / 1000));
     clearInterval(timerInterval);
     timerInterval = null;
+    timerPaused = true;
     btn.textContent = '▶';
-  } else if (timerRemaining > 0) {
+  } else if (timerPaused && timerRemaining > 0) {
+    // Gjenoppta: set nytt sluttidspunkt
+    timerEndTime = Date.now() + timerRemaining * 1000;
+    timerPaused = false;
     btn.textContent = '⏸';
-    timerInterval = setInterval(() => {
-      timerRemaining--;
-      updateTimerDisplay();
-      if (timerRemaining <= 0) {
-        clearInterval(timerInterval);
-        const display = document.getElementById('timerDisplay');
-        display.textContent = '✓ Klar!';
-        display.classList.add('done');
-        playPling();
-        setTimeout(() => {
-          document.getElementById('timerBar').classList.remove('visible');
-          display.classList.remove('done');
-        }, 3000);
-      }
-    }, 1000);
+    tickTimer();
+    timerInterval = setInterval(tickTimer, 500);
   }
 }
 
 function stopTimer() {
   if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+  timerEndTime = null;
+  timerPaused = false;
   const bar = document.getElementById('timerBar');
   if (bar) bar.classList.remove('visible');
 }
 // Gjer funksjonar tilgjengelege globalt for inline onclick-hendingar
 window.selectDay = selectDay;
-window.toggleCheck = toggleCheck;
 window.showView = showView;
 window.openLogModal = openLogModal;
 window.closeModal = closeModal;
@@ -1072,8 +1101,9 @@ window.saveSession = saveSession;
 window.copyLog = copyLog;
 window.exportJSON = exportJSON;
 window.importJSON = importJSON;
-window.bumpWeek = bumpWeek;
 window.startTimer = startTimer;
+window.startTimerEx = startTimerEx;
+window.bumpSet = bumpSet;
 window.stopTimer = stopTimer;
 window.pauseTimer = pauseTimer;
 
