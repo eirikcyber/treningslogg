@@ -287,19 +287,19 @@ const PROGRAM = {
   A: {
     label: 'Tung nedre + skulderpress',
     exercises: [
-      { name: 'Squat',        target: '4 × 5',   pause: '3 min',  note: 'Tung | +2,5 kg/veke', sets: 4, hasKg: true,  startKg: 65,   supersetWith: 'Skulderpress', supersetLabel: '1a' },
-      { name: 'Skulderpress', target: '4 × 12',  pause: '3 min',  note: '12,5 kg – i pausen til squat', sets: 4, hasKg: true,  startKg: 12.5, supersetWith: 'Squat',        supersetLabel: '1b' },
-      { name: 'Deadlift',     target: '3 × 6',   pause: '90 sek', note: 'Lett – 60 kg', sets: 3, hasKg: true,  startKg: 60 },
-      { name: 'Planke',       target: '3 × 40 sek', pause: '60 sek', note: 'Etter deadlift | ikkje til failure', sets: 3, hasKg: false, isTimed: true, planReps: 40 },
+      { name: 'Squat',        target: '4 × 5',      pause: '3 min',  note: 'Tung | +2,5 kg/veke', sets: 4, hasKg: true,  startKg: 65,   supersetWith: 'Skulderpress', supersetLabel: '1a' },
+      { name: 'Skulderpress', target: '4 × 12',     pause: '3 min',  note: '12,5 kg – supersett i squat-pause', sets: 4, hasKg: true,  startKg: 12.5, supersetWith: 'Squat', supersetLabel: '1b' },
+      { name: 'Deadlift',     target: '3 × 6',      pause: '90 sek', note: 'Lett – 50 kg (80% av squat)', sets: 3, hasKg: true,  startKg: 50 },
+      { name: 'Planke',       target: '3 × 30–45 sek', pause: '60 sek', note: 'Etter deadlift', sets: 3, hasKg: false, isTimed: true, planReps: 40 },
     ]
   },
   B: {
     label: 'Tung øvre + chin-ups',
     exercises: [
-      { name: 'Benkpress',     target: '4 × 5',      pause: '3 min',  note: 'Tung | +2,5 kg/veke', sets: 4, hasKg: true,  startKg: 60 },
-      { name: 'Chin-ups',      target: '4 × maks-2 + 2 neg.', pause: '2 min', note: '3–5 sek ned på negatives', sets: 4, hasKg: false },
-      { name: 'Horisontal rad', target: '3 × 10–12', pause: '90 sek', note: 'Under stang i cage', sets: 3, hasKg: false },
-      { name: 'Biceps curl',   target: '3 × 10–12',  pause: '60 sek', note: 'Progressivt', sets: 3, hasKg: true,  startKg: null },
+      { name: 'Benkpress',    target: '4 × 5',      pause: '3 min',  note: 'Tung | +2,5 kg/veke', sets: 4, hasKg: true,  startKg: 60 },
+      { name: 'Chin-ups',     target: '4 × maks-2 + 2 neg.', pause: '2 min', note: '3–5 sek ned på negatives', sets: 4, hasKg: false },
+      { name: 'Bent-over row', target: '3 × 10–12', pause: '90 sek', note: 'Flat rygg, dreg mot navlen', sets: 3, hasKg: true, startKg: 40 },
+      { name: 'Biceps curl',  target: '3 × 10–12',  pause: '60 sek', note: 'Curl-stang 15 kg', sets: 3, hasKg: true,  startKg: 15 },
     ]
   },
   C: {
@@ -308,7 +308,7 @@ const PROGRAM = {
       { name: 'Deadlift',  target: '4 × 4–5',  pause: '3 min',  note: 'Tung | +2,5 kg/veke', sets: 4, hasKg: true,  startKg: 62.5, supersetWith: 'Chin-ups', supersetLabel: '1a' },
       { name: 'Chin-ups',  target: '3 × maks-2', pause: '3 min', note: 'I pausen til deadlift', sets: 3, hasKg: false, supersetWith: 'Deadlift', supersetLabel: '1b' },
       { name: 'Squat',     target: '3 × 8',    pause: '90 sek', note: 'Lett (80% av deadlift tung)', sets: 3, hasKg: true,  startKg: 52.5 },
-      { name: 'Benkpress', target: '3 × 8–10', pause: '90 sek', note: 'Lettare enn Dag B', sets: 3, hasKg: true,  startKg: 50 },
+      { name: 'Benkpress', target: '3 × 8–10', pause: '90 sek', note: 'Lettare enn Dag B – 50 kg', sets: 3, hasKg: true,  startKg: 50 },
     ]
   }
 };
@@ -369,14 +369,15 @@ function selectDay(day, btn) {
 }
 
 const PROGRESSION = {
-  'Squat_A':        { increment: 2.5 },
-  'Deadlift_A':     { increment: 0 },        // fast 60 kg til vidare
-  'Skulderpress_A': { increment: 0 },        // manuell trappetrinn-plan
-  'Benkpress_B':    { increment: 2.5 },
-  'Biceps curl_B':  { increment: 0 },
-  'Deadlift_C':     { increment: 2.5 },
-  'Squat_C':        { linkedTo: 'Deadlift_C', factor: 0.8 },
-  'Benkpress_C':    { linkedTo: 'Benkpress_B', factor: 1.0 },
+  'Squat_A':          { increment: 2.5 },
+  'Deadlift_A':       { increment: 0 },        // fast 50 kg
+  'Skulderpress_A':   { increment: 0 },        // manuell trappetrinn-plan
+  'Benkpress_B':      { increment: 2.5 },
+  'Bent-over row_B':  { increment: 0 },
+  'Biceps curl_B':    { increment: 0 },
+  'Deadlift_C':       { increment: 2.5 },
+  'Squat_C':          { linkedTo: 'Deadlift_C', factor: 0.8 },
+  'Benkpress_C':      { increment: 0 },        // fast 50 kg
 };
 
 // Finn siste loggførte kg KUN viss nok sett vart gjort (minst minSets), og berre frå rett dag
@@ -704,15 +705,16 @@ function renderProgramView() {
     <div class="card" style="margin-bottom:16px">
       <div class="card-label">Startpunkt</div>
       ${tbl([
-        ['Squat (tung)',         '65 kg', '4 × 5',      '+2,5 kg/veke'],
-        ['Deadlift (tung)',      '60 kg', '4 × 4–5',    '+2,5 kg/veke'],
-        ['Deadlift lett (Dag A)','60 kg', '3 × 6',      '80 % av tung'],
-        ['Squat lett (Dag C)',   '52,5 kg','3 × 8',     '80 % av tung'],
-        ['Benkpress',           '60 kg', '4 × 5',      '+2,5 kg/veke'],
-        ['Skulderpress',        '12,5 kg','4 × 12',    'sjå progresjon'],
-        ['Chin-ups',            'kroppsvekt','4 × maks-2','sjå plan'],
-        ['Horisontal rad',      'kroppsvekt','3 × 10–12','auke vanskegr.'],
-        ['Biceps curl',         '—',     '3 × 10–12',  'progressivt'],
+        ['Squat (tung)',          '65 kg',    '4 × 5',      '+2,5 kg/veke'],
+        ['Deadlift (tung)',       '62,5 kg',  '4 × 4–5',    '+2,5 kg/veke'],
+        ['Deadlift lett (Dag A)', '50 kg',    '3 × 6',      '80% av squat'],
+        ['Squat lett (Dag C)',    '52,5 kg',  '3 × 8',      '80% av deadlift'],
+        ['Benkpress (tung)',      '60 kg',    '4 × 5',      '+2,5 kg/veke'],
+        ['Benkpress (lett)',      '50 kg',    '3 × 8–10',   '85% av tung'],
+        ['Skulderpress',         '12,5 kg',  '4 × 12',     'sjå progresjon'],
+        ['Chin-ups',             'kroppsvekt','4 × maks-2', 'sjå plan'],
+        ['Bent-over row',        '40–50 kg', '3 × 10–12',  'progressivt'],
+        ['Biceps curl',          '15 kg',    '3 × 10–12',  'progressivt'],
       ])}
       <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
         <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;font-family:'DM Mono',monospace">SKULDERPRESS – utan 15 kg</div>
@@ -729,7 +731,7 @@ function renderProgramView() {
 
       <div style="font-size:12px;font-weight:600;color:var(--accent2);margin:12px 0 4px">Dag B – Benkpress (60 kg)</div>
       ${tbl([['20 kg','8–10 reps'],['40 kg','5 reps'],['52,5 kg','2–3 reps'],['60 kg →','4 × 5 arbeidssett']])}
-      <div style="font-size:11px;color:var(--muted);margin-top:4px">Chin-ups, rad og curl treng inga eigen oppvarming.</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px">Chin-ups, bent-over row og biceps curl treng inga eigen oppvarming.</div>
 
       <div style="font-size:12px;font-weight:600;color:var(--accent2);margin:12px 0 4px">Dag C – Deadlift (60 kg)</div>
       ${tbl([['20 kg','6–8 reps'],['40 kg','5 reps'],['52,5 kg','2–3 reps'],['60 kg →','4 × 4–5 arbeidssett']])}
