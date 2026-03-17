@@ -436,7 +436,9 @@ function getPlanReps(ex) {
 const setCounters = {}; // { exIndex: currentSet }
 
 function renderExercises() {
+  try {
   const prog = PROGRAM[currentDay];
+  if (!prog) { console.warn('renderExercises: ugyldig currentDay:', currentDay); return; }
   document.getElementById('dayLabel').textContent = prog.label;
   const list = document.getElementById('exerciseList');
   list.innerHTML = prog.exercises.map((ex, i) => {
@@ -473,6 +475,10 @@ function renderExercises() {
       ${setCountHtml}
     </div>`;
   }).join('');
+  } catch(e) {
+    document.getElementById('exerciseList').innerHTML = `<div style="color:red;font-size:12px;padding:12px">Feil: ${e.message}</div>`;
+    console.error('renderExercises feil:', e);
+  }
 }
 
 function bumpSet(exIdx, total) {
