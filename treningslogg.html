@@ -382,7 +382,7 @@ const PROGRESSION = {
 // Finn siste loggførte kg KUN viss nok sett vart gjort (minst minSets)
 function getLastKg(exName, minSets = 3) {
   for (const s of sessions) {
-    for (const ex of s.exercises) {
+    for (const ex of (s.exercises || [])) {
       if (ex.name === exName && ex.hasKg && ex.sets.length >= minSets) {
         const kg = parseFloat(ex.sets[0].kg);
         if (!isNaN(kg)) return kg;
@@ -781,7 +781,7 @@ function renderHistory() {
         <div class="hist-date">Veke ${getWeekFromDate(s.date)} · ${s.date}</div>
         <div class="hist-card">
           <div class="hist-day-tag">DAG ${s.day}</div>
-          ${s.exercises.map(ex => {
+          ${(s.exercises || []).map(ex => {
             const setsStr = ex.sets.map(set =>
               ex.hasKg ? `${set.kg}kg×${set.reps}` : (set.neg ? `${set.reps}+${set.neg}neg` : `${set.reps}reps`)
             ).join(' / ');
@@ -801,7 +801,7 @@ function renderProgress() {
   // PRs: find max weight for main lifts
   const lifts = ['Squat', 'Deadlift', 'Benkpress'];
   const prs = {};
-  sessions.forEach(s => s.exercises.forEach(ex => {
+  sessions.forEach(s => (s.exercises || []).forEach(ex => {
     const match = lifts.find(l => ex.name.toLowerCase().startsWith(l.toLowerCase()));
     if (!match) return;
     ex.sets.forEach(set => {
@@ -963,7 +963,7 @@ function copyLog() {
     lines.push('-'.repeat(20));
     byWeek[w].slice().reverse().forEach(s => {
       lines.push(`${s.date}  Dag ${s.day}`);
-      s.exercises.forEach(ex => {
+      (s.exercises || []).forEach(ex => {
         const setsStr = ex.sets.map(set =>
           ex.hasKg ? `${set.kg}kg×${set.reps}` : `${set.reps}reps`
         ).join('  ');
@@ -977,7 +977,7 @@ function copyLog() {
   // PRs
   const lifts = ['Squat', 'Deadlift', 'Benkpress'];
   const prs = {};
-  sessions.forEach(s => s.exercises.forEach(ex => {
+  sessions.forEach(s => (s.exercises || []).forEach(ex => {
     const match = lifts.find(l => ex.name.toLowerCase().startsWith(l.toLowerCase()));
     if (!match) return;
     ex.sets.forEach(set => {
