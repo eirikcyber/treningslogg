@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Kaia Trener">
+<meta name="theme-color" content="#0f0a14">
+<title>Kaia Trener</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Mono:wght@400;500&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f0a14;
+  --surface: #18111f;
+  --card: #211628;
+  --border: #362040;
+  --accent: #f0a0d0;
+  --accent2: #b080f0;
+  --accent3: #f0d060;
+  --text: #f5eefa;
+  --muted: #7a6285;
+  --success: #80f0b0;
+  --r: 14px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Lato', sans-serif; overflow-x: hidden; }
+
+#app { display: flex; flex-direction: column; height: 100dvh; }
+
+/* HEADER */
+#header {
+  flex-shrink: 0;
+  background: var(--bg);
+  padding: max(env(safe-area-inset-top), 14px) 20px 0;
+}
+.header-inner {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 0 10px;
+  border-bottom: 1px solid var(--border);
+}
+.app-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 24px; font-weight: 900; letter-spacing: -0.5px;
+  line-height: 1;
+}
+.app-title em { color: var(--accent); font-style: italic; }
+.week-badge {
+  font-family: 'DM Mono', monospace; font-size: 11px;
+  color: var(--accent2); background: var(--card);
+  border: 1px solid var(--border); padding: 5px 12px; border-radius: 20px;
+}
+
+/* TIMER BAR */
+#timerBar {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  padding: 10px 20px;
+  padding-bottom: max(env(safe-area-inset-bottom), 10px);
+  z-index: 200;
+  display: none;
+}
+#timerBar.visible { display: block; }
+.timer-inner { display: flex; align-items: center; gap: 12px; }
+.timer-display {
+  font-family: 'DM Mono', monospace; font-size: 28px; font-weight: 500;
+  color: var(--accent); min-width: 90px; flex-shrink: 0;
+}
+.timer-label { font-size: 13px; color: var(--muted); flex: 1; line-height: 1.3; }
+.timer-stop {
+  background: var(--card); border: 1px solid var(--border);
+  color: var(--text); border-radius: 8px; padding: 8px 14px;
+  font-family: 'Lato', sans-serif; font-size: 13px; font-weight: 700;
+  cursor: pointer;
+}
+
+#content {
+  flex: 1; overflow-y: auto;
+  padding: 16px 20px;
+  padding-bottom: max(env(safe-area-inset-bottom), 80px);
+}
+
+/* NAV */
+#nav {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  display: flex;
+  padding-bottom: max(env(safe-area-inset-bottom), 0px);
+  z-index: 100;
+}
+.nav-btn {
+  flex: 1; border: none; background: transparent;
+  color: var(--muted); padding: 12px 4px 10px;
+  font-family: 'Lato', sans-serif; font-size: 10px; font-weight: 700;
+  letter-spacing: 0.5px; text-transform: uppercase;
+  cursor: pointer; display: flex; flex-direction: column;
+  align-items: center; gap: 4px; transition: color 0.2s;
+}
+.nav-btn svg { width: 20px; height: 20px; }
+.nav-btn.active { color: var(--accent); }
+
+/* VIEWS */
+.view { display: none; }
+.view.active { display: block; }
+
+/* SECTION CHIP */
+.chip {
+  font-family: 'DM Mono', monospace; font-size: 10px;
+  letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 14px;
+}
+
+/* DAY SELECTOR */
+.day-selector { display: flex; gap: 8px; margin-bottom: 16px; }
+.day-btn {
+  flex: 1; border: 1px solid var(--border); background: var(--card);
+  color: var(--muted); border-radius: 10px; padding: 10px 4px;
+  font-family: 'DM Mono', monospace; font-size: 12px;
+  cursor: pointer; transition: all 0.2s;
+}
+.day-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(240,160,208,0.08); }
+
+/* CARD */
+.card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 16px; margin-bottom: 12px;
+}
+.card-label {
+  font-family: 'Playfair Display', serif; font-size: 15px; font-weight: 700;
+  color: var(--accent); margin-bottom: 14px; font-style: italic;
+}
+
+/* EXERCISE ROW */
+.ex-row { margin-bottom: 16px; }
+.ex-header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 4px; }
+.ex-name { font-weight: 700; font-size: 15px; }
+.ex-kg {
+  font-family: 'DM Mono', monospace; font-size: 12px;
+  color: var(--accent3); font-weight: 500;
+}
+.ex-target { font-size: 12px; color: var(--muted); }
+.ex-note { font-size: 11px; color: var(--muted); margin-top: 2px; font-style: italic; }
+
+/* SET COUNTER */
+.set-counter { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.set-dot {
+  width: 32px; height: 32px; border-radius: 50%;
+  border: 2px solid var(--border); background: var(--surface);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted);
+  cursor: pointer; transition: all 0.2s; flex-shrink: 0;
+}
+.set-dot.done { border-color: var(--accent); background: rgba(240,160,208,0.15); color: var(--accent); }
+.set-dot.done::after { content: '✓'; }
+.timer-btn {
+  height: 32px; border-radius: 16px; padding: 0 12px;
+  border: 1px solid var(--accent2); background: transparent;
+  color: var(--accent2); font-family: 'DM Mono', monospace; font-size: 11px;
+  cursor: pointer; white-space: nowrap;
+}
+
+/* SAVE BUTTON */
+.save-btn {
+  width: 100%; padding: 16px; border-radius: var(--r);
+  background: var(--accent); color: var(--bg);
+  border: none; font-family: 'Lato', sans-serif; font-size: 15px; font-weight: 700;
+  cursor: pointer; margin-top: 8px; letter-spacing: 0.3px;
+}
+
+/* PROGRAM VIEW */
+.prog-day { margin-bottom: 20px; }
+.prog-day-title {
+  font-family: 'Playfair Display', serif; font-size: 17px; font-weight: 700;
+  color: var(--accent2); margin-bottom: 10px; font-style: italic;
+}
+.prog-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.prog-table th {
+  text-align: left; font-family: 'DM Mono', monospace; font-size: 10px;
+  color: var(--muted); letter-spacing: 1px; text-transform: uppercase;
+  padding: 4px 8px 8px; border-bottom: 1px solid var(--border);
+}
+.prog-table td { padding: 8px; border-bottom: 1px solid rgba(54,32,64,0.5); vertical-align: top; }
+.prog-table tr:last-child td { border-bottom: none; }
+
+/* PERIODISERING */
+.period-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--r); padding: 14px; margin-bottom: 14px; }
+.period-card h4 { font-family: 'Playfair Display', serif; font-size: 15px; font-weight: 700; color: var(--accent); margin-bottom: 8px; }
+.period-row { display: flex; justify-content: space-between; font-size: 13px; padding: 5px 0; border-bottom: 1px solid rgba(54,32,64,0.5); }
+.period-row:last-child { border-bottom: none; }
+.period-row span:first-child { color: var(--muted); }
+
+/* HISTORY */
+.hist-session { background: var(--card); border: 1px solid var(--border); border-radius: var(--r); padding: 14px; margin-bottom: 10px; }
+.hist-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.hist-date { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); }
+.hist-day { font-family: 'Playfair Display', serif; font-size: 15px; font-weight: 700; color: var(--accent); }
+.hist-ex { font-size: 13px; margin-bottom: 4px; }
+.hist-sets { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); }
+.hist-note { font-size: 12px; color: var(--accent3); margin-top: 8px; font-style: italic; }
+.empty-state { text-align: center; color: var(--muted); padding: 40px 20px; font-size: 14px; }
+
+/* PROGRESS VIEW */
+.prog-stat { background: var(--card); border: 1px solid var(--border); border-radius: var(--r); padding: 14px; margin-bottom: 10px; }
+.prog-stat-name { font-weight: 700; font-size: 14px; margin-bottom: 8px; }
+.prog-stat-row { display: flex; justify-content: space-between; font-size: 13px; padding: 3px 0; }
+.prog-stat-row span:last-child { font-family: 'DM Mono', monospace; color: var(--accent3); }
+
+/* BACKUP SECTION */
+.backup-section { margin-top: 16px; }
+.backup-btn {
+  width: 100%; padding: 13px; border-radius: 10px; margin-bottom: 8px;
+  border: 1px solid var(--border); background: var(--card);
+  color: var(--text); font-family: 'Lato', sans-serif; font-size: 14px;
+  font-weight: 700; cursor: pointer;
+}
+
+/* LOG MODAL */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 300;
+  display: flex; align-items: flex-end;
+  opacity: 0; pointer-events: none; transition: opacity 0.25s;
+}
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+.modal {
+  background: var(--surface); border-radius: 20px 20px 0 0;
+  border-top: 1px solid var(--border);
+  padding: 20px; padding-bottom: max(env(safe-area-inset-bottom), 24px);
+  width: 100%; max-height: 88dvh; overflow-y: auto;
+  transform: translateY(40px); transition: transform 0.25s;
+}
+.modal-overlay.open .modal { transform: translateY(0); }
+.modal-handle { width: 40px; height: 4px; background: var(--border); border-radius: 4px; margin: 0 auto 16px; }
+.modal-title { font-family: 'Playfair Display', serif; font-size: 19px; font-weight: 700; margin-bottom: 4px; }
+.modal-sub { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); margin-bottom: 20px; }
+.field-label {
+  font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; margin-top: 14px;
+}
+.ex-block { background: var(--card); border-radius: 10px; padding: 12px; margin-bottom: 10px; }
+.ex-block-name { font-weight: 700; font-size: 14px; margin-bottom: 10px; }
+.set-log-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.set-log-label { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); width: 40px; flex-shrink: 0; }
+.set-log-input {
+  flex: 1; background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; padding: 9px 10px; color: var(--text);
+  font-family: 'DM Mono', monospace; font-size: 14px;
+  -webkit-appearance: none; appearance: none;
+}
+.set-log-input:focus { outline: none; border-color: var(--accent); }
+.note-input {
+  width: 100%; background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px; color: var(--text);
+  font-family: 'Lato', sans-serif; font-size: 14px; resize: none; min-height: 60px;
+}
+.note-input:focus { outline: none; border-color: var(--accent); }
+.modal-save-btn {
+  width: 100%; padding: 16px; border-radius: var(--r);
+  background: var(--accent); color: var(--bg);
+  border: none; font-family: 'Lato', sans-serif; font-size: 15px; font-weight: 700;
+  cursor: pointer; margin-top: 16px;
+}
+.modal-cancel { display: block; text-align: center; padding: 12px; color: var(--muted); font-size: 14px; cursor: pointer; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="header">
+    <div class="header-inner">
+      <div class="app-title">Kaia <em>Trener</em></div>
+      <div class="week-badge" id="weekBadge">Veke 1</div>
+    </div>
+  </div>
+
+  <!-- TIMER BAR -->
+  <div id="timerBar">
+    <div class="timer-inner">
+      <div class="timer-display" id="timerDisplay">0:00</div>
+      <div class="timer-label" id="timerLabel">Pause</div>
+      <button class="timer-stop" onclick="stopTimer()">✕ Stopp</button>
+    </div>
+  </div>
+
+  <div id="content">
+    <!-- TODAY -->
+    <div class="view active" id="view-today">
+      <div class="chip">📅 dagens økt</div>
+      <div class="day-selector">
+        <button class="day-btn" id="btn-A" onclick="selectDay('A',this)">DAG A</button>
+        <button class="day-btn" id="btn-B" onclick="selectDay('B',this)">DAG B</button>
+        <button class="day-btn" id="btn-C" onclick="selectDay('C',this)">DAG C</button>
+      </div>
+      <div class="card">
+        <div class="card-label" id="dayLabel"></div>
+        <div id="exerciseList"></div>
+      </div>
+      <button class="save-btn" onclick="openLogModal()">+ Logg denne økta</button>
+    </div>
+
+    <!-- PROGRAM -->
+    <div class="view" id="view-program">
+      <div class="chip">📋 program</div>
+      <div id="programContent"></div>
+    </div>
+
+    <!-- HISTORIKK -->
+    <div class="view" id="view-history">
+      <div class="chip">📖 historikk</div>
+      <div id="historyContent"></div>
+    </div>
+
+    <!-- FRAMGANG -->
+    <div class="view" id="view-progress">
+      <div class="chip">📈 framgang</div>
+      <div id="progressContent"></div>
+    </div>
+  </div>
+
+  <!-- NAV -->
+  <nav id="nav">
+    <button class="nav-btn active" onclick="switchView('today',this)">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      I dag
+    </button>
+    <button class="nav-btn" onclick="switchView('program',this)">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      Program
+    </button>
+    <button class="nav-btn" onclick="switchView('history',this)">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 0 .5-4.5"/><polyline points="3 3 3 7 7 7"/></svg>
+      Historikk
+    </button>
+    <button class="nav-btn" onclick="switchView('progress',this)">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      Framgang
+    </button>
+  </nav>
+</div>
+
+<!-- LOG MODAL -->
+<div class="modal-overlay" id="logModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modalTitle">Logg økt</div>
+    <div class="modal-sub" id="modalSub"></div>
+    <div id="modalExercises"></div>
+    <div class="field-label">Notat</div>
+    <textarea class="note-input" id="noteInput" placeholder="Korleis gjekk det?"></textarea>
+    <button class="modal-save-btn" onclick="saveSession()">Lagre økt</button>
+    <span class="modal-cancel" onclick="closeModal()">Avbryt</span>
+  </div>
+</div>
+
+<script>
+// ─── PROGRAM DATA ──────────────────────────────────────────────────────────────
+const START_DATE = new Date('2026-03-31'); // tysdag
+
+const PROGRAM = {
+  A: {
+    label: 'Tung squat + lett deadlift + rad + curl',
+    desc: 'Dag A',
+    exercises: [
+      { name: 'Squat',         sets: 4, reps: '5',      hasKg: true,  startKg: 25,  note: 'Tung | 3 min pause | +2,5 kg/veke',       pause: 180, key: 'Squat_heavy' },
+      { name: 'Deadlift',      sets: 3, reps: '8',      hasKg: true,  startKg: 24,  note: 'Lett – følgjer tung deadlift × 0,8 | 90 sek', pause: 90, key: 'Deadlift_A' },
+      { name: 'Bent over row', sets: 3, reps: '10',     hasKg: true,  startKg: 20,  note: '90 sek pause | +2,5 kg ved mestring',      pause: 90, key: 'Bentoverrow' },
+      { name: 'Biceps curl',   sets: 3, reps: '10–12',  hasKg: true,  startKg: 12,  note: '60 sek pause | juster ved behov',          pause: 60, key: 'Bicepscurl' },
+    ]
+  },
+  B: {
+    label: 'Tung benkpress + lett squat + frontpress + curl',
+    desc: 'Dag B',
+    exercises: [
+      { name: 'Benkpress',     sets: 4, reps: '5',      hasKg: true,  startKg: 25,  note: 'Tung | 3 min pause | +2,5 kg/veke',       pause: 180, key: 'Benkpress_heavy' },
+      { name: 'Squat',         sets: 3, reps: '8',      hasKg: true,  startKg: 20,  note: 'Lett – 80 % av tung squat | 90 sek',      pause: 90,  key: 'Squat_B' },
+      { name: 'Frontpress',    sets: 3, reps: '10–12',  hasKg: true,  startKg: 12,  note: 'Sittande med curlstang | 90 sek | +2,5 kg ved mestring', pause: 90, key: 'Frontpress' },
+      { name: 'Biceps curl',   sets: 3, reps: '10–12',  hasKg: true,  startKg: 12,  note: '60 sek pause',                            pause: 60, key: 'Bicepscurl' },
+    ]
+  },
+  C: {
+    label: 'Tung deadlift + lett benkpress + frontpress + rad',
+    desc: 'Dag C',
+    exercises: [
+      { name: 'Deadlift',      sets: 4, reps: '5',      hasKg: true,  startKg: 30,  note: 'Tung | 3 min pause | +2,5 kg/veke',       pause: 180, key: 'Deadlift_heavy' },
+      { name: 'Benkpress',     sets: 3, reps: '8–10',   hasKg: true,  startKg: 20,  note: 'Lett – ~80 % av tung benkpress | 90 sek', pause: 90,  key: 'Benkpress_C' },
+      { name: 'Frontpress',    sets: 3, reps: '10–12',  hasKg: true,  startKg: 12,  note: 'Sittande med curlstang | 90 sek',         pause: 90,  key: 'Frontpress' },
+      { name: 'Bent over row', sets: 3, reps: '10',     hasKg: true,  startKg: 20,  note: '90 sek pause | +2,5 kg ved mestring',     pause: 90,  key: 'Bentoverrow' },
+    ]
+  }
+};
+
+// Progresjonsreglar
+// key: <exKey>_<day> OR bare <exKey> for felles
+const PROGRESSION = {
+  // Dag A
+  'Squat_heavy':    { increment: 2.5 },
+  'Deadlift_A':     { linkedTo: 'Deadlift_heavy', factor: 0.8 },
+  'Bentoverrow':    { increment: 2.5, onMastery: true },
+  'Bicepscurl':     { increment: 2.5, onMastery: true },
+  // Dag B
+  'Benkpress_heavy':{ increment: 2.5 },
+  'Squat_B':        { linkedTo: 'Squat_heavy', factor: 0.8 },
+  'Frontpress':     { increment: 2.5, onMastery: true },
+  // Dag C
+  'Deadlift_heavy': { increment: 2.5 },
+  'Benkpress_C':    { linkedTo: 'Benkpress_heavy', factor: 0.8 },
+};
+
+const PERIODIZATION = [
+  { weeks: '1–4',  phase: 'Akkumulering',   reps: '4 × 5–6', focus: 'Teknikk, bygg volum' },
+  { weeks: '5–8',  phase: 'Intensifikasjon', reps: '4 × 4–5', focus: 'Auke vekt konsekvent' },
+  { weeks: '9–11', phase: 'Topping',         reps: '4 × 3–4', focus: 'Tunge sett, færre reps' },
+  { weeks: '12',   phase: 'Deload',          reps: '3 × 4',   focus: '60–70 % vekt, halvt volum' },
+];
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+let sessions = [];
+let currentDay = 'A';
+let setDone = {};        // { 'ExName_i': true }
+let timerInterval = null;
+let timerEnd = null;
+let timerPauseSec = 0;
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+function init() {
+  loadSessions();
+  updateWeekBadge();
+  autoSelectDay();
+  renderToday();
+  renderProgram();
+}
+
+function loadSessions() {
+  try { sessions = JSON.parse(localStorage.getItem('kaia_sessions') || '[]'); } catch { sessions = []; }
+}
+
+function saveSessions() {
+  localStorage.setItem('kaia_sessions', JSON.stringify(sessions));
+}
+
+function getCurrentWeek() {
+  const ms = Date.now() - START_DATE.getTime();
+  const days = Math.floor(ms / 86400000);
+  return Math.max(1, Math.min(12, Math.floor(days / 7) + 1));
+}
+
+function updateWeekBadge() {
+  document.getElementById('weekBadge').textContent = 'Veke ' + getCurrentWeek();
+}
+
+function autoSelectDay() {
+  if (sessions.length === 0) { selectDay('A', document.getElementById('btn-A')); return; }
+  const last = sessions[sessions.length - 1].day;
+  const next = last === 'A' ? 'B' : last === 'B' ? 'C' : 'A';
+  selectDay(next, document.getElementById('btn-' + next));
+}
+
+// ─── WEIGHT LOGIC ─────────────────────────────────────────────────────────────
+function round05(kg) { return Math.round(kg * 2) / 2; }
+
+function getLastKgByKey(key) {
+  for (let i = sessions.length - 1; i >= 0; i--) {
+    for (const ex of sessions[i].exercises) {
+      if (ex.key === key && ex.hasKg && ex.sets.length > 0) {
+        const kg = parseFloat(ex.sets[0].kg);
+        if (!isNaN(kg)) return kg;
+      }
+    }
+  }
+  return null;
+}
+
+function getSuggestedKg(ex) {
+  const rule = PROGRESSION[ex.key];
+  if (!rule) {
+    const last = getLastKgByKey(ex.key);
+    return last !== null ? last : ex.startKg;
+  }
+  if (rule.linkedTo) {
+    const linkedRule = PROGRESSION[rule.linkedTo];
+    const linkedLast = getLastKgByKey(rule.linkedTo);
+    let base;
+    if (linkedLast !== null) {
+      const inc = linkedRule ? (linkedRule.increment || 0) : 0;
+      base = (linkedLast + inc) * rule.factor;
+    } else {
+      // finn startKg for linked
+      const linkedEx = Object.values(PROGRAM).flatMap(d => d.exercises).find(e => e.key === rule.linkedTo);
+      base = (linkedEx ? linkedEx.startKg : 0) * rule.factor;
+    }
+    return round05(base);
+  }
+  const last = getLastKgByKey(ex.key);
+  if (last !== null) {
+    if (rule.onMastery) return last; // berre auke ved mestring, ikkje automatisk
+    return round05(last + (rule.increment || 0));
+  }
+  return ex.startKg;
+}
+
+// ─── RENDER TODAY ─────────────────────────────────────────────────────────────
+function selectDay(day, btn) {
+  currentDay = day;
+  setDone = {};
+  document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderToday();
+}
+
+function renderToday() {
+  const prog = PROGRAM[currentDay];
+  document.getElementById('dayLabel').textContent = prog.label;
+  const list = document.getElementById('exerciseList');
+  list.innerHTML = prog.exercises.map((ex, i) => {
+    const kg = ex.hasKg ? getSuggestedKg(ex) : null;
+    const kgStr = kg !== null ? `<span class="ex-kg">→ ${kg} kg</span>` : '';
+    const dots = Array.from({length: ex.sets}, (_, s) =>
+      `<div class="set-dot" id="dot_${i}_${s}" onclick="toggleSet(${i},${s})">${s+1}</div>`
+    ).join('');
+    const timerSec = ex.pause;
+    const timerLbl = timerSec >= 60 ? (timerSec/60) + ' min' : timerSec + ' sek';
+    return `
+      <div class="ex-row">
+        <div class="ex-header">
+          <span class="ex-name">${ex.name}</span>
+          ${kgStr}
+        </div>
+        <div class="ex-target">${ex.sets} × ${ex.reps}</div>
+        <div class="ex-note">${ex.note}</div>
+        <div class="set-counter" style="margin-top:8px">
+          ${dots}
+          <button class="timer-btn" onclick="startTimer(${timerSec}, '${ex.name}')">⏱ ${timerLbl}</button>
+        </div>
+      </div>`;
+  }).join('<hr style="border:none;border-top:1px solid var(--border);margin:4px 0">');
+}
+
+function toggleSet(exIdx, setIdx) {
+  const key = `${exIdx}_${setIdx}`;
+  setDone[key] = !setDone[key];
+  const dot = document.getElementById(`dot_${exIdx}_${setIdx}`);
+  dot.classList.toggle('done', setDone[key]);
+}
+
+// ─── TIMER ────────────────────────────────────────────────────────────────────
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+function playPling() {
+  [880, 1100, 1320].forEach((freq, i) => {
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.connect(g); g.connect(audioCtx.destination);
+    o.frequency.value = freq;
+    o.type = 'sine';
+    const t = audioCtx.currentTime + i * 0.18;
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(0.3, t + 0.03);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
+    o.start(t); o.stop(t + 0.6);
+  });
+}
+
+function startTimer(seconds, label) {
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  if (timerInterval) clearInterval(timerInterval);
+  timerEnd = Date.now() + seconds * 1000;
+  timerPauseSec = seconds;
+  document.getElementById('timerLabel').textContent = 'Pause etter ' + label;
+  document.getElementById('timerBar').classList.add('visible');
+  document.getElementById('nav').style.display = 'none';
+  updateTimerDisplay();
+  timerInterval = setInterval(updateTimerDisplay, 250);
+}
+
+function updateTimerDisplay() {
+  const rem = Math.max(0, Math.ceil((timerEnd - Date.now()) / 1000));
+  const m = Math.floor(rem / 60);
+  const s = rem % 60;
+  document.getElementById('timerDisplay').textContent = m + ':' + String(s).padStart(2, '0');
+  if (rem === 0) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+    playPling();
+    document.getElementById('timerLabel').textContent = '✓ Pause ferdig!';
+    setTimeout(stopTimer, 3000);
+  }
+}
+
+function stopTimer() {
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+  document.getElementById('timerBar').classList.remove('visible');
+  document.getElementById('nav').style.display = 'flex';
+}
+
+// ─── LOG MODAL ────────────────────────────────────────────────────────────────
+function openLogModal() {
+  const prog = PROGRAM[currentDay];
+  const week = getCurrentWeek();
+  document.getElementById('modalTitle').textContent = 'Logg Dag ' + currentDay;
+  document.getElementById('modalSub').textContent = 'Veke ' + week + ' · ' + prog.label;
+  document.getElementById('noteInput').value = '';
+
+  const container = document.getElementById('modalExercises');
+  container.innerHTML = prog.exercises.map((ex, i) => {
+    const kg = ex.hasKg ? getSuggestedKg(ex) : null;
+    const setRows = Array.from({length: ex.sets}, (_, s) => `
+      <div class="set-log-row">
+        <span class="set-log-label">Sett ${s+1}</span>
+        ${ex.hasKg ? `<input class="set-log-input" type="number" inputmode="decimal" step="0.5" placeholder="kg" value="${kg !== null ? kg : ''}" id="kg_${i}_${s}" style="max-width:90px">` : ''}
+        <input class="set-log-input" type="number" inputmode="numeric" placeholder="reps" id="reps_${i}_${s}" value="${ex.reps.includes('–') ? ex.reps.split('–')[0] : ex.reps}">
+      </div>`).join('');
+    return `<div class="ex-block">
+      <div class="ex-block-name">${ex.name} <span style="font-weight:300;font-size:12px;color:var(--muted)">${ex.sets} × ${ex.reps}</span></div>
+      ${setRows}
+    </div>`;
+  }).join('');
+
+  document.getElementById('logModal').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('logModal').classList.remove('open');
+}
+
+function saveSession() {
+  const prog = PROGRAM[currentDay];
+  const week = getCurrentWeek();
+  const today = new Date();
+  const dateStr = today.toLocaleDateString('no-NO', { day:'2-digit', month:'2-digit', year:'numeric' });
+
+  const exercises = prog.exercises.map((ex, i) => {
+    const sets = Array.from({length: ex.sets}, (_, s) => {
+      const reps = document.getElementById(`reps_${i}_${s}`)?.value || '';
+      if (ex.hasKg) {
+        const kg = document.getElementById(`kg_${i}_${s}`)?.value || '';
+        return { kg, reps };
+      }
+      return { reps };
+    });
+    return { name: ex.name, key: ex.key, hasKg: ex.hasKg, sets };
+  });
+
+  sessions.push({ date: dateStr, day: currentDay, week, exercises, note: document.getElementById('noteInput').value });
+  saveSessions();
+  closeModal();
+  setDone = {};
+  renderToday();
+  renderHistory();
+  renderProgress();
+  alert('Økt lagra! 💪');
+}
+
+// ─── PROGRAM VIEW ─────────────────────────────────────────────────────────────
+function renderProgram() {
+  const html = Object.entries(PROGRAM).map(([day, data]) => `
+    <div class="prog-day">
+      <div class="prog-day-title">Dag ${day} – ${data.label}</div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <table class="prog-table">
+          <tr><th>Øving</th><th>Sett×Reps</th><th>Startvekt</th></tr>
+          ${data.exercises.map(ex => `
+            <tr>
+              <td><strong>${ex.name}</strong><br><span style="font-size:11px;color:var(--muted)">${ex.note}</span></td>
+              <td style="white-space:nowrap">${ex.sets}×${ex.reps}</td>
+              <td style="font-family:'DM Mono',monospace;white-space:nowrap">${ex.hasKg ? ex.startKg+' kg' : '–'}</td>
+            </tr>`).join('')}
+        </table>
+      </div>
+    </div>`).join('');
+
+  const periods = `
+    <div class="period-card">
+      <h4>Periodisering</h4>
+      ${PERIODIZATION.map(p => `
+        <div class="period-row">
+          <span>Veke ${p.weeks} – ${p.phase}</span>
+          <span>${p.reps}</span>
+        </div>`).join('')}
+    </div>
+    <div class="period-card">
+      <h4>Merknadar</h4>
+      <div style="font-size:13px;color:var(--muted);line-height:1.7">
+        • Nakke: start lett, fokus på teknikk dei første vekene<br>
+        • Lett squat = 80 % av tung squat same veke<br>
+        • Lett deadlift = 80 % av tung deadlift same veke<br>
+        • Lett benkpress ≈ 80 % av tung benkpress<br>
+        • Frontpress: bygg gradvis – over på langstang når du er klar<br>
+        • Biceps curl: start 12 kg, juster ved behov
+      </div>
+    </div>`;
+
+  document.getElementById('programContent').innerHTML = html + periods;
+}
+
+// ─── HISTORY ──────────────────────────────────────────────────────────────────
+function renderHistory() {
+  const el = document.getElementById('historyContent');
+  if (sessions.length === 0) {
+    el.innerHTML = '<div class="empty-state">Ingen økter logga enno.<br>Logg di første økt i dag!</div>';
+    return;
+  }
+  el.innerHTML = [...sessions].reverse().map(s => `
+    <div class="hist-session">
+      <div class="hist-header">
+        <span class="hist-day">Dag ${s.day}</span>
+        <span class="hist-date">${s.date} · Veke ${s.week}</span>
+      </div>
+      ${s.exercises.map(ex => `
+        <div class="hist-ex">
+          <strong>${ex.name}</strong>
+          <div class="hist-sets">${ex.sets.map(st => ex.hasKg ? `${st.kg} kg × ${st.reps}` : `${st.reps} reps`).join(' | ')}</div>
+        </div>`).join('')}
+      ${s.note ? `<div class="hist-note">💬 ${s.note}</div>` : ''}
+    </div>`).join('');
+}
+
+// ─── PROGRESS ────────────────────────────────────────────────────────────────
+function renderProgress() {
+  // Samle alle øvingsnavn med vekt
+  const exMap = {};
+  for (const s of sessions) {
+    for (const ex of s.exercises) {
+      if (!ex.hasKg) continue;
+      if (!exMap[ex.name]) exMap[ex.name] = [];
+      const kg = parseFloat(ex.sets[0]?.kg);
+      if (!isNaN(kg)) exMap[ex.name].push({ date: s.date, kg, week: s.week });
+    }
+  }
+
+  const statsHtml = Object.entries(exMap).map(([name, data]) => {
+    const best = Math.max(...data.map(d => d.kg));
+    const latest = data[data.length - 1];
+    const first = data[0];
+    const diff = latest.kg - first.kg;
+    const diffStr = diff > 0 ? `+${diff} kg` : diff < 0 ? `${diff} kg` : '–';
+    return `
+      <div class="prog-stat">
+        <div class="prog-stat-name">${name}</div>
+        <div class="prog-stat-row"><span>Siste vekt</span><span>${latest.kg} kg</span></div>
+        <div class="prog-stat-row"><span>Beste</span><span>${best} kg</span></div>
+        <div class="prog-stat-row"><span>Framgang</span><span>${diffStr}</span></div>
+      </div>`;
+  }).join('');
+
+  const backupHtml = `
+    <div class="backup-section">
+      <div class="chip" style="margin-top:16px">🔒 sikkerheitskopi</div>
+      <button class="backup-btn" onclick="exportJSON()">Del logg som JSON</button>
+      <button class="backup-btn" onclick="document.getElementById('importFile').click()">Importer logg frå JSON</button>
+      <input type="file" id="importFile" accept=".json" style="display:none" onchange="importJSON(event)">
+    </div>`;
+
+  document.getElementById('progressContent').innerHTML =
+    (statsHtml || '<div class="empty-state">Ingen data enno.</div>') + backupHtml;
+}
+
+function exportJSON() {
+  const blob = new Blob([JSON.stringify(sessions, null, 2)], {type: 'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'kaia_treningslogg.json';
+  if (navigator.share) {
+    navigator.share({ title: 'Kaia Treningslogg', files: [new File([blob], 'kaia_treningslogg.json', {type:'application/json'})] })
+      .catch(() => { document.body.appendChild(a); a.click(); a.remove(); });
+  } else { document.body.appendChild(a); a.click(); a.remove(); }
+  URL.revokeObjectURL(url);
+}
+
+function importJSON(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const imported = JSON.parse(e.target.result);
+      if (!Array.isArray(imported)) throw new Error();
+      // Slå saman utan duplikat
+      const existingDates = new Set(sessions.map(s => s.date + s.day));
+      const newSessions = imported.filter(s => !existingDates.has(s.date + s.day));
+      sessions = [...sessions, ...newSessions].sort((a,b) => {
+        const parse = d => { const [dd,mm,yy] = d.split('.'); return new Date(`${yy}-${mm}-${dd}`); };
+        return parse(a.date) - parse(b.date);
+      });
+      saveSessions();
+      renderHistory();
+      renderProgress();
+      alert(`Importert ${newSessions.length} nye økter.`);
+    } catch { alert('Ugyldig JSON-fil.'); }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+// ─── NAV ──────────────────────────────────────────────────────────────────────
+function switchView(name, btn) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('view-' + name).classList.add('active');
+  btn.classList.add('active');
+  if (name === 'history') renderHistory();
+  if (name === 'progress') renderProgress();
+}
+
+// ─── START ────────────────────────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
