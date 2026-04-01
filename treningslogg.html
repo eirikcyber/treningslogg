@@ -127,7 +127,7 @@
     background: linear-gradient(135deg, var(--accent2) 0%, #3060c0 100%);
   }
   .prog-day:nth-child(2) .prog-header { background: linear-gradient(135deg, var(--accent3) 0%, #8020a0 100%); }
-  .prog-day:nth-child(3) .prog-header { background: linear-gradient(135deg, var(--accent) 0%, #60a020 100%); color: var(--bg); }
+  .prog-day:nth-child(3) .prog-header { background: linear-gradient(135deg, var(--accent) 0%, #60a020 100%); color: var(--bg) }
   .prog-day-title { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 800; }
   .prog-body { background: var(--card); border: 1px solid var(--border); border-top: none; border-radius: 0 0 var(--r) var(--r); }
   .prog-ex { padding: 12px 16px; border-bottom: 1px solid var(--border); }
@@ -285,30 +285,33 @@
 // ── DATA ──────────────────────────────────────────────────────────
 const PROGRAM = {
   A: {
-    label: 'Tung nedre + skulderpress',
+    label: 'Tung nedre + skulderpress tung',
     exercises: [
-      { name: 'Squat',        target: '4 × 5',      pause: '3 min',  note: 'Tung | +2,5 kg/veke', sets: 4, hasKg: true,  startKg: 65,   supersetWith: 'Skulderpress', supersetLabel: '1a' },
-      { name: 'Skulderpress', target: '4 × 12',     pause: '3 min',  note: '12,5 kg – supersett i squat-pause', sets: 4, hasKg: true,  startKg: 12.5, supersetWith: 'Squat', supersetLabel: '1b' },
-      { name: 'Deadlift',     target: '3 × 6',      pause: '90 sek', note: 'Lett – 50 kg (80% av squat)', sets: 3, hasKg: true,  startKg: 50 },
-      { name: 'Planke',       target: '3 × 30–45 sek', pause: '60 sek', note: 'Etter deadlift', sets: 3, hasKg: false, isTimed: true, planReps: 40 },
+      { name: 'Squat',           target: '4 × 5–7',    pause: '3 min',  note: 'Tung | supersett med skulderpress', sets: 4, hasKg: true,  startKg: 72.5, supersetWith: 'Skulderpress', supersetLabel: '1a' },
+      { name: 'Skulderpress',    target: '4 × 12–16',  pause: '3 min',  note: '12,5 kg – supersett i squat-pause', sets: 4, hasKg: true,  startKg: 12.5, supersetWith: 'Squat', supersetLabel: '1b' },
+      { name: 'Deadlift',        target: '3 × 8',      pause: '90 sek', note: 'Lett – 80% av tung deadlift', sets: 3, hasKg: true,  startKg: 54 },
+      { name: 'Omvendt flyes',   target: '3 × 12–15',  pause: '60 sek', note: 'Rear delt – roleg og kontrollert', sets: 3, hasKg: true,  startKg: 6 },
+      { name: 'Planke',          target: '3 × 40–60 sek', pause: '60 sek', note: 'Sideplankane tel òg', sets: 3, hasKg: false, isTimed: true, planReps: 50 },
     ]
   },
   B: {
-    label: 'Tung øvre + chin-ups',
+    label: 'Tung øvre + triceps',
     exercises: [
-      { name: 'Benkpress',    target: '4 × 5',      pause: '3 min',  note: 'Tung | +2,5 kg/veke', sets: 4, hasKg: true,  startKg: 60 },
-      { name: 'Chin-ups',     target: '4 × maks-2 + 2 neg.', pause: '2 min', note: '3–5 sek ned på negatives', sets: 4, hasKg: false },
-      { name: 'Bent-over row', target: '3 × 10–12', pause: '90 sek', note: 'Flat rygg, dreg mot navlen', sets: 3, hasKg: true, startKg: 40 },
-      { name: 'Biceps curl',  target: '3 × 10–12',  pause: '60 sek', note: 'Curl-stang 15 kg', sets: 3, hasKg: true,  startKg: 15 },
+      { name: 'Benkpress',       target: '4 × 5',      pause: '3 min',  note: 'Tung | mikroplate +1 kg/veke', sets: 4, hasKg: true,  startKg: 62 },
+      { name: 'Chin-ups',        target: '4 × maks-2 + 5 neg.', pause: '2 min', note: '3–5 sek ned på negatives', sets: 4, hasKg: false },
+      { name: 'Bent-over row',   target: '3 × 10–12',  pause: '90 sek', note: 'Flat rygg, dreg mot navlen', sets: 3, hasKg: true,  startKg: 42.5 },
+      { name: 'Skull crushers',  target: '3 × 10–12',  pause: '60 sek', note: 'EZ-stang – start lett, kontroll', sets: 3, hasKg: true,  startKg: 20 },
     ]
   },
   C: {
-    label: 'Tung deadlift + squat lett + volum',
+    label: 'Tung deadlift + volum',
     exercises: [
-      { name: 'Deadlift',  target: '4 × 4–5',  pause: '3 min',  note: 'Tung | +2,5 kg/veke', sets: 4, hasKg: true,  startKg: 62.5, supersetWith: 'Chin-ups', supersetLabel: '1a' },
-      { name: 'Chin-ups',  target: '3 × maks-2', pause: '3 min', note: 'I pausen til deadlift', sets: 3, hasKg: false, supersetWith: 'Deadlift', supersetLabel: '1b' },
-      { name: 'Squat',     target: '3 × 8',    pause: '90 sek', note: 'Lett (80% av deadlift tung)', sets: 3, hasKg: true,  startKg: 52.5 },
-      { name: 'Benkpress', target: '3 × 8–10', pause: '90 sek', note: 'Lettare enn Dag B – 50 kg', sets: 3, hasKg: true,  startKg: 50 },
+      { name: 'Deadlift',        target: '4 × 4–5',   pause: '3 min',  note: 'Tung | supersett med chin-ups', sets: 4, hasKg: true,  startKg: 70, supersetWith: 'Chin-ups', supersetLabel: '1a' },
+      { name: 'Chin-ups',        target: '3 × maks-2 + 3 neg.', pause: '3 min', note: 'I pausen til deadlift', sets: 3, hasKg: false, supersetWith: 'Deadlift', supersetLabel: '1b' },
+      { name: 'Squat',           target: '3 × 8',     pause: '90 sek', note: 'Lett – 80% av tung squat', sets: 3, hasKg: true,  startKg: 56 },
+      { name: 'Benkpress',       target: '3 × 8–10',  pause: '90 sek', note: 'Lett – følgjer mikroplate-prog.', sets: 3, hasKg: true,  startKg: 51 },
+      { name: 'Skulderpress',    target: '3 × 12–15', pause: '60 sek', note: 'Lett – kontroll og full rørsle', sets: 3, hasKg: true,  startKg: 10 },
+      { name: 'Omvendt flyes',   target: '3 × 12–15', pause: '60 sek', note: 'Rear delt – roleg og kontrollert', sets: 3, hasKg: true,  startKg: 6 },
     ]
   }
 };
@@ -369,15 +372,18 @@ function selectDay(day, btn) {
 }
 
 const PROGRESSION = {
-  'Squat_A':          { increment: 2.5 },
-  'Deadlift_A':       { increment: 0 },        // fast 50 kg
-  'Skulderpress_A':   { increment: 0 },        // manuell trappetrinn-plan
-  'Benkpress_B':      { increment: 2.5 },
-  'Bent-over row_B':  { increment: 0 },
-  'Biceps curl_B':    { increment: 0 },
-  'Deadlift_C':       { increment: 2.5 },
-  'Squat_C':          { linkedTo: 'Deadlift_C', factor: 0.8 },
-  'Benkpress_C':      { increment: 0 },        // fast 50 kg
+  'Squat_A':             { increment: 2.5 },
+  'Skulderpress_A':      { increment: 0 },        // manuell trappetrinn-plan
+  'Deadlift_A':          { linkedTo: 'Deadlift_C', factor: 0.8 },  // lett – 80% av tung deadlift
+  'Omvendt flyes_A':     { increment: 0 },        // start 6 kg, juster ved mestring
+  'Benkpress_B':         { increment: 1 },         // mikroplate +1 kg/veke
+  'Bent-over row_B':     { increment: 0 },
+  'Skull crushers_B':    { increment: 0 },         // start 20 kg, juster ved mestring
+  'Deadlift_C':          { increment: 2.5 },
+  'Squat_C':             { linkedTo: 'Squat_A', factor: 0.8 },
+  'Benkpress_C':         { linkedTo: 'Benkpress_B', factor: 1 },   // følgjer mikroplate-prog.
+  'Skulderpress_C':      { increment: 0 },         // lett skulderpress, 10 kg
+  'Omvendt flyes_C':     { increment: 0 },         // start 6 kg
 };
 
 // Finn siste loggførte kg KUN viss nok sett vart gjort (minst minSets), og berre frå rett dag
