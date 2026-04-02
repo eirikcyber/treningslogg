@@ -287,11 +287,10 @@ const PROGRAM = {
   A: {
     label: 'Tung nedre + skulderpress tung',
     exercises: [
-      { name: 'Squat',           target: '4 × 5–7',    pause: '3 min',  note: 'Tung | supersett med skulderpress', sets: 4, hasKg: true,  startKg: 72.5, supersetWith: 'Skulderpress', supersetLabel: '1a' },
-      { name: 'Skulderpress',    target: '4 × 12–16',  pause: '3 min',  note: '12,5 kg – supersett i squat-pause', sets: 4, hasKg: true,  startKg: 12.5, supersetWith: 'Squat', supersetLabel: '1b' },
+      { name: 'Squat',           target: '4 × 5',      pause: '3 min',  note: 'Tung | supersett med skulderpress', sets: 4, hasKg: true,  startKg: 72.5, supersetWith: 'Skulderpress', supersetLabel: '1a' },
+      { name: 'Skulderpress',    target: '4 × 8–10',   pause: '3 min',  note: 'EZ-stang – supersett i squat-pause', sets: 4, hasKg: true,  startKg: 29.5, supersetWith: 'Squat', supersetLabel: '1b' },
       { name: 'Deadlift',        target: '3 × 8',      pause: '90 sek', note: 'Lett – 80% av tung deadlift', sets: 3, hasKg: true,  startKg: 54 },
       { name: 'Omvendt flyes',   target: '3 × 12–15',  pause: '60 sek', note: 'Rear delt – roleg og kontrollert', sets: 3, hasKg: true,  startKg: 6 },
-      { name: 'Planke',          target: '3 × 40–60 sek', pause: '60 sek', note: 'Sideplankane tel òg', sets: 3, hasKg: false, isTimed: true, planReps: 50 },
     ]
   },
   B: {
@@ -373,7 +372,7 @@ function selectDay(day, btn) {
 
 const PROGRESSION = {
   'Squat_A':             { increment: 2.5 },
-  'Skulderpress_A':      { increment: 0 },        // manuell trappetrinn-plan
+  'Skulderpress_A':      { increment: 1 },
   'Deadlift_A':          { linkedTo: 'Deadlift_C', factor: 0.8 },  // lett – 80% av tung deadlift
   'Omvendt flyes_A':     { increment: 0 },        // start 6 kg, juster ved mestring
   'Benkpress_B':         { increment: 1 },         // mikroplate +1 kg/veke
@@ -382,7 +381,7 @@ const PROGRESSION = {
   'Deadlift_C':          { increment: 2.5 },
   'Squat_C':             { linkedTo: 'Squat_A', factor: 0.8 },
   'Benkpress_C':         { linkedTo: 'Benkpress_B', factor: 1 },   // følgjer mikroplate-prog.
-  'Skulderpress_C':      { increment: 0 },         // lett skulderpress, 10 kg
+  'Skulderpress_C':      { linkedTo: 'Skulderpress_A', factor: 0.8 },
   'Omvendt flyes_C':     { increment: 0 },         // start 6 kg
 };
 
@@ -415,11 +414,17 @@ function getSuggestedKg(ex, day) {
     const linkedLast = getLastKg(linkedName, 3, linkedDay);
     const linkedEx = Object.values(PROGRAM).flatMap(d => d.exercises).find(e => e.name === linkedName);
     const base = linkedLast !== null ? linkedLast : (linkedEx?.startKg || 0);
-    return round(base * rule.factor);
+    // For linked exercises, also add increment if defined
+    const inc = (rule.increment || 0);
+    return round(base * rule.factor + inc);
   }
 
   const last = getLastKg(ex.name, 3, day);
-  if (last !== null) return last;
+  if (last !== null) {
+    // Add increment on top of last logged kg
+    const inc = rule ? (rule.increment || 0) : 0;
+    return round(last + inc);
+  }
 
   if (ex.startKg !== null && ex.startKg !== undefined) return ex.startKg;
   return null;
