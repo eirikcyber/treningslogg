@@ -287,10 +287,11 @@ const PROGRAM = {
   A: {
     label: 'Tung nedre + skulderpress tung',
     exercises: [
-      { name: 'Squat',           target: '4 × 5',      pause: '3 min',  note: 'Tung | supersett med skulderpress', sets: 4, hasKg: true,  startKg: 72.5, supersetWith: 'Skulderpress', supersetLabel: '1a' },
-      { name: 'Skulderpress',    target: '4 × 8–10',   pause: '3 min',  note: 'EZ-stang – supersett i squat-pause', sets: 4, hasKg: true,  startKg: 29.5, supersetWith: 'Squat', supersetLabel: '1b' },
+      { name: 'Squat',           target: '4 × 5–7',    pause: '3 min',  note: 'Tung | supersett med skulderpress', sets: 4, hasKg: true,  startKg: 72.5, supersetWith: 'Skulderpress', supersetLabel: '1a' },
+      { name: 'Skulderpress',    target: '4 × 12–16',  pause: '3 min',  note: '12,5 kg – supersett i squat-pause', sets: 4, hasKg: true,  startKg: 12.5, supersetWith: 'Squat', supersetLabel: '1b' },
       { name: 'Deadlift',        target: '3 × 8',      pause: '90 sek', note: 'Lett – 80% av tung deadlift', sets: 3, hasKg: true,  startKg: 54 },
       { name: 'Omvendt flyes',   target: '3 × 12–15',  pause: '60 sek', note: 'Rear delt – roleg og kontrollert', sets: 3, hasKg: true,  startKg: 6 },
+      { name: 'Planke',          target: '3 × 40–60 sek', pause: '60 sek', note: 'Sideplankane tel òg', sets: 3, hasKg: false, isTimed: true, planReps: 50 },
     ]
   },
   B: {
@@ -371,19 +372,39 @@ function selectDay(day, btn) {
 }
 
 const PROGRESSION = {
-  'Squat_A':             { increment: 2.5 },
-  'Skulderpress_A':      { increment: 1 },
-  'Deadlift_A':          { linkedTo: 'Deadlift_C', factor: 0.8 },  // lett – 80% av tung deadlift
-  'Omvendt flyes_A':     { increment: 0 },        // start 6 kg, juster ved mestring
-  'Benkpress_B':         { increment: 1 },         // mikroplate +1 kg/veke
+  'Squat_A':             { increment: 0 },
+  'Skulderpress_A':      { increment: 0 },
+  'Deadlift_A':          { linkedTo: 'Deadlift_C', factor: 0.8 },
+  'Omvendt flyes_A':     { increment: 0 },
+  'Benkpress_B':         { increment: 0 },
   'Bent-over row_B':     { increment: 0 },
-  'Skull crushers_B':    { increment: 0 },         // start 20 kg, juster ved mestring
-  'Deadlift_C':          { increment: 2.5 },
+  'Skull crushers_B':    { increment: 0 },
+  'Deadlift_C':          { increment: 0 },
   'Squat_C':             { linkedTo: 'Squat_A', factor: 0.8 },
-  'Benkpress_C':         { linkedTo: 'Benkpress_B', factor: 1 },   // følgjer mikroplate-prog.
+  'Benkpress_C':         { linkedTo: 'Benkpress_B', factor: 0.8 },
   'Skulderpress_C':      { linkedTo: 'Skulderpress_A', factor: 0.8 },
-  'Omvendt flyes_C':     { increment: 0 },         // start 6 kg
+  'Omvendt flyes_C':     { increment: 0 },
 };
+
+// Hovudløft som får fase-basert target-tekst
+const MAIN_LIFTS = ['Squat', 'Deadlift', 'Benkpress'];
+
+function getPhaseTarget(exName, day) {
+  const isLight = (exName === 'Deadlift' && day === 'A') ||
+                  (exName === 'Squat' && day === 'C') ||
+                  (exName === 'Benkpress' && day === 'C');
+  if (!MAIN_LIFTS.includes(exName) || isLight) return null;
+  const week = getCurrentWeek();
+  if (week <= 4)  return '4 × 5';
+  if (week <= 8)  return '4 × 4–5';
+  if (week <= 11) return '4 × 3–4';
+  return '3 × 4';
+}
+
+function parseKg(val) {
+  if (val === null || val === undefined) return NaN;
+  return parseFloat(String(val).replace(',', '.'));
+}
 
 // Finn siste loggførte kg KUN viss nok sett vart gjort (minst minSets), og berre frå rett dag
 function getLastKg(exName, minSets = 3, day = null) {
@@ -391,7 +412,7 @@ function getLastKg(exName, minSets = 3, day = null) {
     if (day && s.day !== day) continue;
     for (const ex of (s.exercises || [])) {
       if (ex.name === exName && ex.hasKg && ex.sets.length >= minSets) {
-        const kg = parseFloat(ex.sets[0].kg);
+        const kg = parseKg(ex.sets[0].kg);
         if (!isNaN(kg)) return kg;
       }
     }
@@ -414,17 +435,11 @@ function getSuggestedKg(ex, day) {
     const linkedLast = getLastKg(linkedName, 3, linkedDay);
     const linkedEx = Object.values(PROGRAM).flatMap(d => d.exercises).find(e => e.name === linkedName);
     const base = linkedLast !== null ? linkedLast : (linkedEx?.startKg || 0);
-    // For linked exercises, also add increment if defined
-    const inc = (rule.increment || 0);
-    return round(base * rule.factor + inc);
+    return round(base * rule.factor);
   }
 
   const last = getLastKg(ex.name, 3, day);
-  if (last !== null) {
-    // Add increment on top of last logged kg
-    const inc = rule ? (rule.increment || 0) : 0;
-    return round(last + inc);
-  }
+  if (last !== null) return last;
 
   if (ex.startKg !== null && ex.startKg !== undefined) return ex.startKg;
   return null;
@@ -437,10 +452,11 @@ function parsePauseSec(pause) {
   return (minMatch ? parseInt(minMatch[1]) * 60 : 0) + (sekMatch ? parseInt(sekMatch[1]) : 0);
 }
 
-function getPlanReps(ex) {
-  // Hent planlagde reps frå target-streng, t.d. "4 × 5" → 5, "3 × 10–12" → 10
+function getPlanReps(ex, day) {
   if (ex.planReps) return ex.planReps;
-  const m = ex.target.match(/×\s*(\d+)/);
+  const phaseTarget = getPhaseTarget(ex.name, day || currentDay);
+  const targetStr = phaseTarget || ex.target;
+  const m = targetStr.match(/×\s*(\d+)/);
   return m ? parseInt(m[1]) : '';
 }
 
@@ -458,6 +474,8 @@ function renderExercises() {
       ? `<span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);margin-left:6px">→ ${suggested} kg</span>`
       : (ex.hasKg ? `<span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);margin-left:6px">—</span>` : '');
     const pauseSec = parsePauseSec(ex.pause);
+    const phaseTarget = getPhaseTarget(ex.name, currentDay);
+    const displayTarget = phaseTarget || ex.target;
     const ssLabel = ex.supersetLabel
       ? `<span style="font-family:'DM Mono',monospace;font-size:11px;background:rgba(240,96,160,0.15);color:var(--accent3);border:1px solid rgba(240,96,160,0.3);border-radius:4px;padding:1px 6px;margin-right:4px">${ex.supersetLabel}</span>`
       : `<span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);margin-right:4px">${i+1}</span>`;
@@ -480,7 +498,7 @@ function renderExercises() {
       ">⏱<span>${ex.pause}</span></button>
       <div class="ex-info">
         <div class="ex-name">${ssLabel}${ex.name}${kgBadge}</div>
-        <div class="ex-target">${ex.target}</div>
+        <div class="ex-target">${displayTarget}</div>
         <div style="font-size:11px;color:var(--muted);margin-top:1px">${ex.note}</div>
       </div>
       ${setCountHtml}
@@ -976,9 +994,11 @@ function copyLog() {
     byWeek[w].slice().reverse().forEach(s => {
       lines.push(`${s.date}  Dag ${s.day}`);
       (s.exercises || []).forEach(ex => {
-        const setsStr = ex.sets.map(set =>
-          ex.hasKg ? `${set.kg}kg×${set.reps}` : `${set.reps}reps`
-        ).join('  ');
+        const setsStr = ex.sets.map(set => {
+          if (ex.hasKg) return `${set.kg}kg×${set.reps}`;
+          if (set.neg) return `${set.reps}reps+${set.neg}neg`;
+          return `${set.reps}reps`;
+        }).join('  ');
         lines.push(`  ${ex.name}: ${setsStr}`);
       });
       if (s.note) lines.push(`  → ${s.note}`);
