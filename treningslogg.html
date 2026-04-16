@@ -287,31 +287,30 @@ const PROGRAM = {
   A: {
     label: 'Tung nedre + skulderpress tung',
     exercises: [
-      { name: 'Squat',           target: '4 × 5–7',    pause: '3 min',  note: 'Tung | supersett med skulderpress', sets: 4, hasKg: true,  startKg: 72.5, supersetWith: 'Skulderpress', supersetLabel: '1a' },
-      { name: 'Skulderpress',    target: '4 × 12–16',  pause: '3 min',  note: '12,5 kg – supersett i squat-pause', sets: 4, hasKg: true,  startKg: 12.5, supersetWith: 'Squat', supersetLabel: '1b' },
+      { name: 'Squat',           target: '4 × 5',      pause: '3 min',  note: 'Tung | supersett med skulderpress', sets: 4, hasKg: true,  startKg: 72.5, supersetWith: 'Skulderpress', supersetLabel: '1a' },
+      { name: 'Skulderpress',    target: '4 × 8–10',   pause: '3 min',  note: 'EZ-stang – supersett i squat-pause', sets: 4, hasKg: true,  startKg: 29.5, supersetWith: 'Squat', supersetLabel: '1b' },
       { name: 'Deadlift',        target: '3 × 8',      pause: '90 sek', note: 'Lett – 80% av tung deadlift', sets: 3, hasKg: true,  startKg: 54 },
-      { name: 'Omvendt flyes',   target: '3 × 12–15',  pause: '60 sek', note: 'Rear delt – roleg og kontrollert', sets: 3, hasKg: true,  startKg: 6 },
-      { name: 'Planke',          target: '3 × 40–60 sek', pause: '60 sek', note: 'Sideplankane tel òg', sets: 3, hasKg: false, isTimed: true, planReps: 50 },
+      { name: 'Omvendt flyes',   target: '3 × 12–15',  pause: '60 sek', note: 'Rear delt – 45° benk, roleg og kontrollert', sets: 3, hasKg: true,  startKg: 6 },
     ]
   },
   B: {
     label: 'Tung øvre + triceps',
     exercises: [
-      { name: 'Benkpress',       target: '4 × 5',      pause: '3 min',  note: 'Tung | mikroplate +1 kg/veke', sets: 4, hasKg: true,  startKg: 62 },
-      { name: 'Chin-ups',        target: '4 × maks-2 + 5 neg.', pause: '2 min', note: '3–5 sek ned på negatives', sets: 4, hasKg: false },
-      { name: 'Bent-over row',   target: '3 × 10–12',  pause: '90 sek', note: 'Flat rygg, dreg mot navlen', sets: 3, hasKg: true,  startKg: 42.5 },
-      { name: 'Skull crushers',  target: '3 × 10–12',  pause: '60 sek', note: 'EZ-stang – start lett, kontroll', sets: 3, hasKg: true,  startKg: 20 },
+      { name: 'Benkpress',       target: '4 × 5',      pause: '3 min',  note: 'Tung', sets: 4, hasKg: true,  startKg: 62.5 },
+      { name: 'Chin-ups',        target: '3 × maks-2 + 5 neg.', pause: '2 min', note: '3–5 sek ned på negatives', sets: 3, hasKg: false },
+      { name: 'Bent-over row',   target: '3 × 10–12',  pause: '90 sek', note: '90° rygg, dreg mot brystet', sets: 3, hasKg: true,  startKg: 40 },
+      { name: 'Skull crushers',  target: '3 × 10–12',  pause: '60 sek', note: 'EZ-stang – kontroll', sets: 3, hasKg: true,  startKg: 12 },
     ]
   },
   C: {
     label: 'Tung deadlift + volum',
     exercises: [
-      { name: 'Deadlift',        target: '4 × 4–5',   pause: '3 min',  note: 'Tung | supersett med chin-ups', sets: 4, hasKg: true,  startKg: 70, supersetWith: 'Chin-ups', supersetLabel: '1a' },
-      { name: 'Chin-ups',        target: '3 × maks-2 + 3 neg.', pause: '3 min', note: 'I pausen til deadlift', sets: 3, hasKg: false, supersetWith: 'Deadlift', supersetLabel: '1b' },
+      { name: 'Deadlift',        target: '4 × 4–5',   pause: '3 min',  note: 'Tung', sets: 4, hasKg: true,  startKg: 70 },
+      { name: 'Chin-ups',        target: '3 × maks-2 + 3 neg.', pause: '2 min', note: '3–5 sek ned på negatives', sets: 3, hasKg: false },
       { name: 'Squat',           target: '3 × 8',     pause: '90 sek', note: 'Lett – 80% av tung squat', sets: 3, hasKg: true,  startKg: 56 },
-      { name: 'Benkpress',       target: '3 × 8–10',  pause: '90 sek', note: 'Lett – følgjer mikroplate-prog.', sets: 3, hasKg: true,  startKg: 51 },
-      { name: 'Skulderpress',    target: '3 × 12–15', pause: '60 sek', note: 'Lett – kontroll og full rørsle', sets: 3, hasKg: true,  startKg: 10 },
-      { name: 'Omvendt flyes',   target: '3 × 12–15', pause: '60 sek', note: 'Rear delt – roleg og kontrollert', sets: 3, hasKg: true,  startKg: 6 },
+      { name: 'Benkpress',       target: '3 × 8–10',  pause: '90 sek', note: 'Lett – 80% av tung benkpress', sets: 3, hasKg: true,  startKg: 50 },
+      { name: 'Skulderpress',    target: '3 × 12–15', pause: '60 sek', note: 'Lett – supersett med omvendt flyes', sets: 3, hasKg: true,  startKg: 23.5, supersetWith: 'Omvendt flyes', supersetLabel: '5a' },
+      { name: 'Omvendt flyes',   target: '3 × 12–15', pause: '60 sek', note: 'Rear delt – supersett med skulderpress', sets: 3, hasKg: true,  startKg: 6, supersetWith: 'Skulderpress', supersetLabel: '5b' },
     ]
   }
 };
@@ -900,12 +899,12 @@ function getWeekFromDate(dateStr) {
   if (!dateStr) return getCurrentWeek();
   const p = dateStr.split('.');
   const d = new Date(`${p[2]}-${p[1]}-${p[0]}`);
-  const start = new Date('2026-03-11');
+  const start = new Date('2026-03-18');
   const diffDays = Math.floor((d - start) / 86400000);
   return Math.min(12, Math.max(1, Math.floor(diffDays / 7) + 1));
 }
 function getCurrentWeek() {
-  const start = new Date('2026-03-11');
+  const start = new Date('2026-03-18');
   const now = new Date();
   const diffDays = Math.floor((now - start) / 86400000);
   const week = Math.min(12, Math.max(1, Math.floor(diffDays / 7) + 1));
