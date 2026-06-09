@@ -166,10 +166,10 @@ canvas.spark { width: 100%; height: 100%; }
 </div>
 
 <div class="tabs">
-  <div class="tab active" data-tab="today">I dag</div>
-  <div class="tab" data-tab="program">Program</div>
-  <div class="tab" data-tab="history">Historikk</div>
-  <div class="tab" data-tab="progress">Framgang</div>
+  <div class="tab active" data-tab="today" onclick="switchTab('today')">I dag</div>
+  <div class="tab" data-tab="program" onclick="switchTab('program')">Program</div>
+  <div class="tab" data-tab="history" onclick="switchTab('history')">Historikk</div>
+  <div class="tab" data-tab="progress" onclick="switchTab('progress')">Framgang</div>
 </div>
 
 <!-- TODAY -->
@@ -229,19 +229,19 @@ canvas.spark { width: 100%; height: 100%; }
 <div class="toast" id="toast"></div>
 
 <div class="bottom-nav">
-  <div class="nav-item active" data-tab="today" onclick="switchTab('today', this)">
+  <div class="nav-item active" data-tab="today" onclick="switchTab('today')">
     <div class="nav-icon">⚡</div>
     <div class="nav-label">I dag</div>
   </div>
-  <div class="nav-item" data-tab="program" onclick="switchTab('program', this)">
+  <div class="nav-item" data-tab="program" onclick="switchTab('program')">
     <div class="nav-icon">📋</div>
     <div class="nav-label">Program</div>
   </div>
-  <div class="nav-item" data-tab="history" onclick="switchTab('history', this)">
+  <div class="nav-item" data-tab="history" onclick="switchTab('history')">
     <div class="nav-icon">🕒</div>
     <div class="nav-label">Historikk</div>
   </div>
-  <div class="nav-item" data-tab="progress" onclick="switchTab('progress', this)">
+  <div class="nav-item" data-tab="progress" onclick="switchTab('progress')">
     <div class="nav-icon">📈</div>
     <div class="nav-label">Framgang</div>
   </div>
@@ -676,13 +676,13 @@ function drawSpark(entries) {
   });
 }
 
-function switchTab(tabName, el) {
+function switchTab(tabName) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('tab-' + tabName).classList.add('active');
   document.querySelector(`.tab[data-tab="${tabName}"]`).classList.add('active');
-  el.classList.add('active');
+  document.querySelector(`.nav-item[data-tab="${tabName}"]`).classList.add('active');
 
   if (tabName === 'history') renderHistory();
   if (tabName === 'progress') { renderProgressSelect(); renderProgress(); }
