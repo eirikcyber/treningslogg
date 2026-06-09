@@ -407,7 +407,7 @@ function buildExercises() {
           <div class="ex-name">${ex.name}</div>
           <div class="ex-meta">${ex.sets} sett × ${ex.reps} ${ex.weighted?'reps':''}${!ex.weighted?' (kroppsvekt)':''}</div>
         </div>
-        <div class="ex-suggest">${suggest.note}</div>
+        <div style="text-align:right"><div class="ex-suggest">${suggest.kg > 0 ? suggest.kg + ' kg' : '—'}</div><div style="font-size:10px;color:var(--muted)">${suggest.note === 'Startvekt' ? 'Startvekt' : 'sist logga'}</div></div>
       </div>
       <div class="ex-body" id="ex-body-${i}">
         ${setRows}
@@ -520,16 +520,28 @@ function renderHistory() {
       </div>`;
     }).join('');
     return `<div class="hist-day">
-      <div class="hist-head" onclick="toggleHist(${si})">
+      <div class="hist-head" onclick="toggleHist(${si})" style="cursor:pointer">
         <div>
           <div class="hist-date">${formatDate(session.date)}</div>
           <div style="font-size:11px;color:var(--muted);margin-top:2px;">${session.dayTitle||''}</div>
         </div>
-        <div class="hist-label">DAG ${session.day}</div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="hist-label">DAG ${session.day}</div>
+          <div onclick="event.stopPropagation();deleteSession(${si})" style="font-size:18px;cursor:pointer;padding:2px 6px;color:var(--muted);border-radius:6px" title="Slett økt">🗑</div>
+        </div>
       </div>
       <div class="hist-body" id="hist-${si}" style="display:none">${exRows}</div>
     </div>`;
   }).join('');
+}
+
+function deleteSession(i) {
+  if (!confirm('Slette denne økta?')) return;
+  const hist = getHistory();
+  hist.splice(i, 1);
+  saveHistory(hist);
+  renderHistory();
+  showToast('Økt sletta');
 }
 
 function toggleHist(i) {
